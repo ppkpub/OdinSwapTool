@@ -121,7 +121,7 @@ function  getPubUserInfo($user_odin){
 
                    
                 
-                $default_user_info['pubkey']= strlen($tmp_user_info['vd_set']['pubkey']>0) 
+                $default_user_info['pubkey']= strlen($tmp_user_info['vd_set']['pubkey'])>0 
                                              ? $tmp_user_info['vd_set']['pubkey'] : $tmp_user_info['authentication'][0]['publicKeyHex'];
             }
         }
@@ -325,7 +325,22 @@ function rsaVerify($str_original, $str_pubkey, $sign, $algo )
         $str_pubkey = "-----BEGIN PUBLIC KEY-----\n".$str_pubkey.'-----END PUBLIC KEY-----';
     }
     
-    if ($sign !== false && openssl_verify($str_original, $sign, $str_pubkey,$algo) == 1) {
+    $php_algo='';
+    switch($algo){
+        case 'SHA256withRSA':
+            $php_algo='SHA256';
+            break;
+        case 'SHA1withRSA':
+            $php_algo='SHA1';
+            break;
+        case 'MD5withRSA':
+            $php_algo='MD5';
+            break;
+        default:
+            $php_algo=$algo;
+    }
+    
+    if ($sign !== false && openssl_verify($str_original, $sign, $str_pubkey,$php_algo) == 1) {
         $res = true;
     }
 

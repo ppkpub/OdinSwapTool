@@ -12,9 +12,17 @@ $gArrayCoinPriceCNY=@json_decode(file_get_contents('config/coin_price_cny.json')
 //获得指定类型货币数额的参考金额（单位：人民币元）
 function getCoinValueOfCNY($amount,$coin_type){
     global $gArrayCoinPriceCNY;
-    if(array_key_exists($coin_type,$gArrayCoinPriceCNY))
-        return ceil($amount*$gArrayCoinPriceCNY[$coin_type]);
-    else
+    if(array_key_exists($coin_type,$gArrayCoinPriceCNY)){
+        $tmp_val=ceil($amount*$gArrayCoinPriceCNY[$coin_type]*10000);
+        if($tmp_val<100){
+            $tmp_val=$tmp_val/10000;
+        }else if($tmp_val<10000){
+            $tmp_val=ceil($tmp_val/100)/100;
+        }else{
+            $tmp_val=ceil($tmp_val/10000);
+        }
+        return $tmp_val;
+    }else
         return 0;
 }
 
