@@ -1,0 +1,134 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>奥丁号拍卖交换工具 - ODIN Swap Tool </title>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body>
+<nav class="navbar navbar-default" role="navigation">
+<div class="container-fluid">
+  <!-- Brand and toggle get grouped for better mobile display -->
+  <div class="navbar-header">
+    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-navbar-collapse-1">
+      <span class="sr-only">Toggle navigation</span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </button>
+    <a class="navbar-brand logo" href="./">拍卖&交换</a>
+  </div>
+
+  <!-- Collect the nav links, forms, and other content for toggling -->
+  <div class="collapse navbar-collapse" id="bs-navbar-collapse-1">
+    <ul class="nav navbar-nav">
+        <li><a href="./">开始体验</a></li>
+        <li><a href="#" onclick="history.back();">返回</a></li>
+    </ul>
+  </div>
+</div>
+</nav>
+
+<p>　　<strong>奥丁号(ODIN)</strong>自2015年发布以来，引起了越来越多人的关注。这个基于区块链技术的“标识”是完全意义上的去中心化世界的路标。由于目前奥丁号(ODIN)产生于比特币的打包区块中，因此注册者不能指定具体的奥丁号。比如想注册“8888”的，结果注册到的是“9000”；想注册能转义对应“ICBC”的号码，结果注册到的是对应“HSBC”的数字，诸如之类。简言之，奥丁号不能像传统域名一样指定名称来抢注，每一次注册交易确认后的对应号码有很大的随机性。<br>
+　　基于奥丁号(ODIN)完全自主的特性，每个奥丁号都是可以自主转让的，PPk协议和管理工具已支持相关的自主转让功能。为了让社区成员自由方便的互换奥丁号(ODIN)，各取所需，这里提供一个开放的奥丁号拍卖和交换信息交流工具，供交易需求双方自主选用和自行成交。本工具是完全开放的，不提供居中担保和裁判规则，无法保证交易双方的真实意愿和实际行为，请自主决定、自担风险。</p>
+
+<h3>　浏览拍卖信息</h3>
+<ul>
+<p>浏览拍卖信息不需要登录，可以直接访问主页即可浏览当前拍卖的奥丁号(ODIN)信息，点击具体标识可查看详情，并根据其中的信息去自主联系沟通，确认购买意向时再登录和报价。</p>
+</ul>
+
+<h3>　用户登录</h3>
+<ul>
+<p>需采用奥丁号(ODIN)作为用户身份快速登录，需要安装PPkBrowser安卓版0.3.5以上版本，<a href="https://ppkpub.github.io/docs/help_ppkbrowser/">请点击阅读这里的操作说明安装和使用</a></p>
+
+<p><a name="testuser"> </a>注：<br><strong>关于体验帐户的说明:</strong>为了便于新用户上手体验，本工具允许尚未完整设置身份验证密钥的奥丁号（包括直接使用比原钱包地址）登录体验部分功能，在这种情况下，该体验帐户只能参与竞拍报价，不能发起新拍卖。如需拍卖自己拥有的奥丁号，请按<a href="https://ppkpub.github.io/docs/help_ppkbrowser/#s051">相应的操作说明</a>完整设置验证密钥进行身份验证即可。</p>
+</ul>
+</ul>
+
+
+<h3>　发布拍卖信息</h3>
+<ul>
+<p>用户登录后，点击“我的帐号”，即可查看本人所使用的身份标识信息，以及作为该标识注册者的BTC地址注册的全部奥丁号(ODIN)列表，在此列表中可以查看已经处于拍卖的记录状态，也可以点击对应奥丁号记录的“发起拍卖”按钮，来填写和发布新的拍卖信息。</p>
+</ul>
+
+<h3>　参与拍卖报价</h3>
+<ul>
+<p>需要购买奥丁号的朋友，可以浏览已有的拍卖信息，对于有意购买的奥丁号，可以点击对应拍卖记录详情显示页面里的“我要报价”按钮，来填写和发布报价，等待拍卖方的确认。</p>
+</ul>
+
+<h3>　拍卖成交和付款</h3>
+<ul>
+<p>1.拍卖方可以浏览已报价记录，并在有满意报价时点击确认接受对应报价，并将此确认报价信息存证到区块链上（目前支持比原链BTM和比特现金BCH，后续还可以扩展支持更多公链）。</p>
+<p>2.报价成交后，后续奥丁号过户交易采取“款到发货”，即求购方先把对应报价的数字加密货币打入奥丁号拥有者所对应的地址，并将该支付交易存证到区块链上。</p>
+<p>3.标识拥有者在收到对应报价数量的数字加密货币后，<a href="https://ppkpub.github.io/docs/help_ppkbrowser/#s04">使用奥丁号的管理工具里的“转移注册者”功能</a>，在比特币（BTC）链上将标识的注册者修改为求购方身份标识对应的BTC地址，然后更新拍卖交易记录的状态为“已转移注册权”。</p>
+<p>4.求购方需要<a href="https://ppkpub.github.io/docs/help_ppkbrowser/#s04">使用奥丁号的管理工具里的“确认接收注册权转移”功能</a>，确认接收处于过户状态的标识拥有权，并在成为新的注册者后，继续将所获得奥丁号的管理者改为自己所需要的比特币BTC地址，等到相关信息被比特币BTC区块链确认后，奥丁号过户转移所有权才算完成，然后更新拍卖交易记录的状态为“确认交易已完成”即可。</p>
+
+<p><strong>注：<br>
+在通过BTC链进行奥丁号转移过户时，卖方在发出转移和买方在确认转移时，需留意调整所使用奥丁号管理工具的矿工费用，建议在BCT交易拥堵时提高到5000-10000聪或更高水平，以得到比较快的确认。</strong>
+</p>
+<p><font color="#f00"><strong>风险提示：</strong><br>
+1.拍卖双方间是点对点的直接交易，本工具不提供居中担保和裁判规则，无法保证交易双方的真实意愿和实际行为。<br>
+
+2.工具可以帮助把拍卖双方的成交意向过程存证到区块链上，如拍卖方在确认接受某个报价时，会通过自己对应的钱包地址发出确认接受报价的存证信息；购买方可以通过从对应链上查看确认，是对应奥丁号拥有者的正确地址发出来的（注意BCH和BTC的地址两者是一样的），不是假冒地址，但无法保证拍卖者实体的后续付款行为。这和传统商业模式下的“款到付款”一样，买家支付货款后就有卖家不发货的风险，是需要买家根据其他因素综合来自主判断的，比如订单金额大小、卖家的成交历史记录等。
+</font>
+</p>
+
+</ul>
+
+<h3>　奥丁号转出过户时转错买家地址的应急处理</h3>
+<ul>
+<p>奥丁号转出过户时，应注意正确填写转出目的地址，即填为买家奥丁号对应的注册BTC地址。
+如果不慎填错了，填成了别人的地址或不存在的地址，还是有机会应急补救的，具体方法说明如下。<br>
+
+拍卖方在发错奥丁号的转出过户交易后，在所填错的接收方BTC地址未点击操作“确认接收”发出交易，或者“确认接收”的交易尚未被BTC链收录前，这个奥丁号就还没有最终完成转移，拍卖方仍拥有对奥丁号的控制权，这时拍卖方可以第一时间重新发一条转出交易，填写正确的接收方及买家BTC地址，<font color="#f00"><strong>注意将给矿工的交易费设的高一些</strong></font>， 在这笔新转出交易被区块链收录后，第一时间通知买家确认接收，并同样<font color="#f00"><strong>让买家留意将给矿工的交易费设的高一些</strong></font>，等到正确的确认交易被区块链收录，就抢先完成了奥丁号的正确过户。<br>
+<br>
+注：<br>
+1.以上补救措施是建立在以BTC链上确认收录的信息为准的前提下，是完全自主的操作，不存在任何强制干预措施。<br>
+2.以上补救措施只是应急方案，并不能保证百分百成功！如果所填错的接收方BTC地址“确认接收”的交易，早于补救措施完成前被BTC链收录，以上补救措施将失败。补救措施失败时，拍卖方只能尝试联系所填错的接收方，进行友好协商，让对方转回奥丁号了。<br>
+3.给矿工手续费的提高幅度可以结合当时BTC交易拥堵情况来设定，一般建议是标准费用1000聪的5-10倍，或者是比上一次错误发出的交易费提高2-3倍以上，越高就越有机会补救回来。<br>
+
+</p>
+</ul>
+
+
+
+<h3>　拍卖到期、等待确拍或支付超时等处理机制</h3>
+<ul>
+<p>当拍卖设定的截止时间到期后，如果该拍卖记录存在有效的报价，则进入“等待确拍”的状态，由拍卖方来选择满意报价进行确认即可。如果该拍卖记录无有效报价，则自动流拍，不需要处理。</p>
+<p>当拍卖纪录处于“等待确拍”的状态超过7天后，拍卖方仍未及时进行确认，则自动流拍。</p>
+<p>当拍卖纪录处于“等待支付”的状态超过7天后，报价方仍未及时进行支付，则自动流拍。</p>
+</ul>
+
+<h3>　关于支付和存证采用的币种/公链</h3>
+<ul>
+<p>奥丁号是承载在比特币（BTC）区块链上的，但拍卖工具支持采用比原（BTM）、比特现金（BCH）等作为交易支付和存证币种，这样既坚持了比特币（BTC）高算力、防篡改性好的优势，又发挥了比原、比特现金等公链在交易费用、效率等方面的优势，通过多链结合来有效扩展奥丁号的应用场景和价值潜力。后续还将进一步引入ETH，EOS，LTC等更多币种/公链。将来配合PPk安卓应用的逐步升级，用户可以自主选择使用任意的币种，进行拍卖交易和存证。</p>
+</ul>
+
+
+
+<h3>　资产安全提示</h3>
+<ul>
+<p>为尽量提高资金安全，求购方务必在交易前确认卖出方的奥丁号的注册者地址，采用登记在比特币区块链上的标识拥有者BTC地址或者关联绑定的比原BTM地址，作为交易转账地址，并通过链上存证相关确认报价和支付信息，不要随意向通过微信、Telegram等聊天工具联系时提供的地址转账。</p>
+<p>可以通过多种方式来查询一个奥丁号的注册拥有者地址等信息，包括但不限于<a target="_blank" href="https://ppkpub.github.io/docs/DOC_PPk_JavaTool_Tutorial.pdf">PC电脑上PPk客户端工具</a>、<a target="_blank" href="https://ppkpub.github.io/docs/ppkbrowser/">安卓手机上的PPk浏览器APP</a>和<a target="_blank" href="http://tool.ppkpub.org:9876/">直接访问网页版PPk工具</a>等方法。</p>
+</ul>
+
+<h3>　其它</h3>
+<ul>
+<p>使用过程中发现的功能错误和问题建议，可以联系电子邮件 ppkpub@gmail.com 或微信 ppkpub0 </p>
+<p>其它未尽事宜和交易过程中的争议，以链上信息为准，由交易双方自行友好协商解决。</p>
+</ul>
+
+<h3 align=center><a href="./">现在开始体验...</a></h3>
+
+<div class="container-fluid footer">
+PPkPub ODIN Swap Toolkit 0.3 &copy; 2019. Released under the <a href="http://opensource.org/licenses/mit-license.php">MIT License</a>.
+</div>
+
+</body>
+</html>
+
+
