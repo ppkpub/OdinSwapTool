@@ -13,14 +13,13 @@ function isBrowserSupportEthWeb3Plugin()
 
 }
 
-//获取当前页面url
 function getCurrentUrl($includeHost=true) 
 {
    $url='';
    if($includeHost)
    {
        $arrayTmp=explode('/',$_SERVER['SERVER_PROTOCOL']);
-       $url.=strtolower($arrayTmp[0]).'://'.$_SERVER['HTTP_HOST'];
+       $url.= (isHttps()?'https':'http') .'://'.$_SERVER['HTTP_HOST'];
    }
    if (isset($_SERVER['REQUEST_URI'])) {
        $url .= $_SERVER['REQUEST_URI'];
@@ -30,6 +29,23 @@ function getCurrentUrl($includeHost=true)
        $url .= empty($_SERVER['QUERY_STRING'])?'':'?'.$_SERVER['QUERY_STRING'];
    }
    return $url;
+}
+
+function isHttps(){
+    if ( ! empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')
+    {
+        return TRUE;
+    }
+    elseif (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+    {
+        return TRUE;
+    }
+    elseif ( ! empty($_SERVER['HTTP_FRONT_END_HTTPS']) && strtolower($_SERVER['HTTP_FRONT_END_HTTPS']) !== 'off')
+    {
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
 //获取当前页面的网址路径
@@ -343,3 +359,8 @@ function getCurrentMicroTime()
     return $time;
 }
 
+
+//基于session id进一步生成UUID（最大为32字节），用于URL参数中安全传递，避免直接暴露session_id
+function generateSessionSafeUUID(){
+    return substr(hash('ripemd160', session_id()),0,32);
+}

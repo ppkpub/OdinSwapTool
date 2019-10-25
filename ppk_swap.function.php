@@ -438,3 +438,4 @@ function getEscapedLettersOfShortODIN($listEscaped,$original,$posn,$pref){
 
     return $listEscaped;
 }
+

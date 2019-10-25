@@ -2,7 +2,7 @@
 /**
  * 传入用户奥丁号、签名等信息进行登录验证
  */
- require_once "ppk_swap.inc.php";
+require_once "ppk_swap.inc.php";
 
 $qruuid=safeReqChrStr('qruuid');
 $user_odin_uri=safeReqChrStr('user_odin_uri');
@@ -12,18 +12,27 @@ $response_type=safeReqChrStr('response_type');
 
 if(empty($qruuid) )
 {
-    $qruuid=session_id(); 
+    $qruuid=generateSessionSafeUUID(); 
 }
 
 if( !empty($user_odin_uri) ){
+    $user_loginlevel=0;
     if(startsWith($user_odin_uri,COIN_TYPE_BYTOM)){
         //测试允许直接输入BTM地址作为体验帐户登录
         $user_loginlevel=1;
     }else if( !empty($auth_txt_hex)  && !empty($user_sign)){
         $str_original= hexToStr($auth_txt_hex);
+        
         if(strpos($str_original,$qruuid)===false){
             $arr = array('code' => 500, 'msg' => '所签名的内容标识不一致. Invalid auth_txt without same qruuid!');
-            echo json_encode($arr);
+            responseResult($response_type,$arr);
+            exit(-1);
+        }
+        
+        $current_page_path=getCurrentPagePath();
+        if(strpos($str_original,$current_page_path)!==0){
+            $arr = array('code' => 500, 'msg' => '所签名的登录网址路径不一致. Mismatched login URL!');
+            responseResult($response_type,$arr);
             exit(-1);
         }
         
@@ -31,10 +40,9 @@ if( !empty($user_odin_uri) ){
         $tmp_user_info = getPubUserInfo($user_odin_uri);
         $str_pubkey=$tmp_user_info['pubkey'];
 
-        $user_loginlevel=0;
         if(strlen($str_pubkey)==0 ){
             $arr = array('code' => 501, 'msg' => '没有获得对应公钥. Invalid pubkey!');
-            echo json_encode($arr);
+            responseResult($response_type,$arr);
             exit(-1);
         }else{
             $user_loginlevel=2;
@@ -48,15 +56,21 @@ if( !empty($user_odin_uri) ){
 
                 if(strcasecmp($result,'OK')!=0){
                     $arr = array('code' => 502, 'msg' => '比特币签名算法验证未通过. Invalid bitcoin signature!');
-                    echo json_encode($arr);
+                    responseResult($response_type,$arr);
                     exit(-1);
                 }
             }else if(!rsaVerify($str_original, $str_pubkey, $array_sign_chunks[1],$array_sign_chunks[0])){ //其他默认尝试用RSA算法验证
                 $arr = array('code' => 503, 'msg' => 'RSA签名验证未通过. Invalid RSA signature!');
-                echo json_encode($arr);
+                responseResult($response_type,$arr);
                 exit(-1);
             }
         }
+    }
+    
+    if($user_loginlevel<=0){
+        $arr = array('code' => 504, 'msg' => '无效请求. Invalid request!');
+        responseResult($response_type,$arr);
+        exit(-1);
     }
     
     //保存登录状态
@@ -66,18 +80,46 @@ if( !empty($user_odin_uri) ){
     if($result===false)
     {
         $arr = array('code' => 504, 'msg' => '无效参数. Invalid argus');
-        echo json_encode($arr);
+        responseResult($response_type,$arr);
         exit(-1);
     }
 
-    if($response_type=='html'){
-        echo '<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/></head>';
-        echo '扫码验证通过，请回到所登录设备上继续访问。<br>Verified ok as ',getSafeEchoTextToPage($user_odin_uri);
-    }else{
-        $arr = array('code' => 0, 'msg' => '扫码验证通过，请回到所登录设备上继续访问。user_sign verified ok as '.$user_odin_uri);
-        echo json_encode($arr);
-    }
+    $arr = array('code' => 0, 'msg' => '扫码验证通过，请回到所登录设备上继续访问。user_sign verified ok as '.$user_odin_uri);
+    responseResult($response_type,$arr);
     exit(0);
+}
+
+function responseResult($response_type,$array_result){
+    if($response_type==='html'){
+        echo '<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>';
+        echo '<h3>',$array_result['msg'],'</h3>';
+        echo "<p align=center><br><input type=button value=' << 返回 '  name=B1 onclick='history.back(-1)'></p>";
+    }else if($response_type=='image'){//微信小程序的图片形式
+        //需安装php-gd库  apt-get install php7.2-gd  
+        //然后编辑php.ini 搜索“ extension=gd2 ” 把前面的“ ； ”去掉
+        //再重启apache2
+        
+        //字体大小
+        $size = 12;
+        //字体类型，本例为宋体
+        $font ="/usr/share/fonts/truetype/ubuntu/simhei.ttf";
+        //显示的文字
+        $text = $array_result['msg'];
+        //创建一个长为500高为50的空白图片
+        $img = imagecreate(500, 50);
+        //给图片分配颜色
+        imagecolorallocate($img, 0xff, 0xcc, 0xcc);
+        //设置字体颜色
+        $black = imagecolorallocate($img, 0, 0, 0);
+        //将ttf文字写到图片中
+        imagettftext($img, $size, 0, 10, 20, $black, $font, $text);
+        //发送头信息
+        header('Content-Type: image/gif');
+        //输出图片
+        imagegif($img);
+    }else{
+        echo json_encode($array_result);
+    }
 }
 
 require_once "page_header.inc.php";
@@ -99,7 +141,7 @@ require_once "page_header.inc.php";
     </div>
 </div>
   
-<p align="center"><input type='button' class="btn btn-success"  id="btn_use_exist_odin" value=' 确 认 登 录 ' onclick='authAsOdinOwner();' disabled="true"></p>
+<p align="center"><input type='button' class="btn btn-success"  id="btn_use_exist_odin" value='请使用PPk浏览器、微信等APP来扫码登录！' onclick='authAsOdinOwner();' disabled="true"></p>
 
 <input type=hidden id="user_name" value="" >
 <input type=hidden id="user_avtar_url" value="http://ppkpub.org/images/user.png" >
@@ -143,6 +185,8 @@ function init(){
     if(typeof(PeerWeb) !== 'undefined'){ //检查PPk开放协议相关PeerWeb JS接口可用性
         console.log("PeerWeb enabled");
         
+        document.getElementById("btn_use_exist_odin").value=" 确 认 登 录 ";
+        
         var exist_odin_uri=getUserPPkURI(document.getElementById("exist_odin_uri").value);
         if(exist_odin_uri.length==0){
             //读取PPk浏览器内置钱包中缺省用户身份标识
@@ -152,10 +196,24 @@ function init(){
         }else{
             getUserOdinInfo();
         }
-    }else{
+    }else{ //检查其他浏览器类型
         console.log("PeerWeb not valid");
         //alert("PeerWeb not valid. Please visit by PPk Browser For Android v0.2.6 above.");
-        document.getElementById("btn_use_exist_odin").value="请使用PPk浏览器安卓版APP来扫码登录！";
+        
+        /*
+        var ua = navigator.userAgent.toLowerCase();//获取判断用的对象
+        if (ua.match(/MicroMessenger/i) == "micromessenger") {
+            //在微信中打开
+            
+        }
+        if (ua.match(/WeiBo/i) == "weibo") {
+                //在新浪微博客户端打开
+        }
+        if (ua.match(/QQ/i) == "qq") {
+                //在QQ空间打开
+        }
+        */
+        window.location.href = "<?php echo WEIXIN_QR_SERVICE_URL;?>?login_confirm_url=<?php echo urlencode(getCurrentUrl());?>";
     }
 }
 

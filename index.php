@@ -5,6 +5,14 @@
 require_once "ppk_swap.inc.php";
 require_once "page_header.inc.php";
 
+//检查是否HTTPS安全访问
+$current_url=getCurrentUrl(true);
+if( FORCE_HTTPS && strtolower(substr($current_url,0,5)) == 'http:' ){
+    $https_url='https'.substr($current_url,4);
+    header("location: ".$https_url);
+    exit(-1);
+}
+
 $pagenum=50;
 $start=0+safeReqNumStr('start');
 

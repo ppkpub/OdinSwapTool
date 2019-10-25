@@ -31,8 +31,7 @@ $g_cachedUserInfos=array();
 function getLogonUserInfo(){
     global $g_dbLink;
     
-    //echo 'seesion_id=[',session_id(),']';
-    $qruuid=session_id();
+    $qruuid=generateSessionSafeUUID();
     $sql = "select * from qrcodelogin where qruuid='" . $qruuid . "'";
     //echo $sql;
     $rs = mysqli_query($g_dbLink,$sql);
@@ -54,7 +53,7 @@ function getLogonUserInfo(){
 //撤消当前登录用户信息
 function unsetLogonUser(){
     global $g_dbLink;
-    $qruuid=session_id();
+    $qruuid=generateSessionSafeUUID();
     $sql = "delete from qrcodelogin where qruuid='" . $qruuid . "'";
     //echo $sql;
     mysqli_query($g_dbLink,$sql);

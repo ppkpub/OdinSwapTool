@@ -4,7 +4,7 @@
  */
 require_once "ppk_swap.inc.php";
 
-$qruuid=session_id();
+$qruuid=generateSessionSafeUUID();
 
 /*
 $qruuid=safeReqChrStr('qruuid');
@@ -24,6 +24,7 @@ if($result===false)
 }
 
 $post_confirm_url=getCurrentPagePath(true).'login_verify.php?qruuid='.urlencode($qruuid);
+//$post_confirm_url=QR_ROUTER_URL.'?login_confirm_url='.urlencode($post_confirm_url);
 $poll_url='login_poll.php?qruuid='.urlencode($qruuid);
 
 $arr = array('code'=> 0, 
