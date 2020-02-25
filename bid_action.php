@@ -109,7 +109,7 @@ require_once "page_header.inc.php";
   <img id="qr_loading" value="image/white.png" ><span id="qr_prompt" ></span><br>
   <?php echo getLang('注：1.确认报价或支付并存证到链上会花费若干交易费用。');?><br>
   <?php echo getLang('2.出于资金安全，建议采用拍卖方身份标识对应钱包地址作为转账地址，并仔细核对币种数额。不要随意向通过微信、Telegram等聊天工具联系时提供的地址转账。');?><br>
-  <?php echo getLang('3.在通过BTC链进行奥丁号转移过户时，卖方在发出转移和买方在确认转移时，需留意调整所使用奥丁号管理工具的矿工费用，建议在BCT交易拥堵时提高到10000聪或更好水平，以得到比较快的确认。');?></span>
+  <?php echo getLang('3.在通过BTC链进行奥丁号转移过户时，卖方在发出转移和买方在确认转移时，需留意调整所使用奥丁号管理工具的矿工费用，建议在BTC交易拥堵时提高到10000聪或更好水平，以得到比较快的确认。');?></span>
 </div>
 </div>
 </form>

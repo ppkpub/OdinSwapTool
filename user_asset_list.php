@@ -11,6 +11,7 @@ if(strlen($g_currentUserODIN)==0){
 
 $original_user_odin=originalReqChrStr('user_odin');
 $owner_address=safeReqChrStr('address');
+$from_want_rec_id=safeReqNumStr('from_want_rec_id');
 
 if(stripos($original_user_odin,PPK_URI_PREFIX)!==0 && stripos($original_user_odin,DID_URI_PREFIX)!==0){
   echo 'Invalid user ODIN.';
@@ -103,7 +104,10 @@ for($ss=0;$ss<count($tmp_odin_list) ;$ss++){
         }
         echo '</td>';
     }else if($g_currentUserLevel>=2){
-        echo '<td><a href="new_sell.php?asset_id=',urlencode($tmp_asset_id),'">',getLang('发布拍卖'),'</a></td>';
+        if(strlen($from_want_rec_id)>0)
+            echo '<td><a href="new_sell.php?asset_id=',urlencode($tmp_asset_id),'&from_want_rec_id=',urlencode($from_want_rec_id),'">',getLang('卖出'),'</a></td>';
+        else
+            echo '<td><a href="new_sell.php?asset_id=',urlencode($tmp_asset_id),'">',getLang('发布拍卖'),'</a></td>';
     }else{
         echo '<td>',getLang('体验帐户，不能发起拍卖'),'[<a href="help.html#testuser">',getLang('说明'),'</a>]</td>';
     }
@@ -114,10 +118,10 @@ for($ss=0;$ss<count($tmp_odin_list) ;$ss++){
 </div>
 <?php
     echo '<center>';
-    $page_base_url='user_asset_list.php?user_odin='.urlencode($original_user_odin).'&address='.urlencode($owner_address).'&start=';
+    $page_base_url='user_asset_list.php?user_odin='.urlencode($original_user_odin).'&address='.urlencode($owner_address).'&from_want_rec_id='.urlencode($from_want_rec_id).'&start=';
 
     if($start>=$pagenum) {//说明有上一页
-        echo '<a href="'.$page_base_url.($start-$pagenum).'">《',getLang('上一页'),'</a> ';
+        echo '<a href="',$page_base_url.($start-$pagenum),'">《',getLang('上一页'),'</a> ';
     }
 
     echo " ",getLang('当前为第'),($start/$pagenum)+1,getLang('页')," ";

@@ -20,7 +20,7 @@ $asset_uri=$array_tx_define['asset_uri'];
 $arr = array('code' => 1, 'msg' => 'Not supported asset_uri: '.$asset_uri);
 
 foreach($gArraySupportedCoinTypeList as $tmp_coin_type){
-  if(startsWith($asset_uri,$tmp_coin_type)){
+  if( $asset_uri == $tmp_coin_type ){
       $tmp_ppk_uri = $tmp_coin_type.'qrCodeOfPay('.$hex.')#1.0';
       $tmp_data=getPPkResource($tmp_ppk_uri);
       

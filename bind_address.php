@@ -1,6 +1,6 @@
 <?php
 /*        PPK ODIN Swap Toolkit           */
-/*         PPkPub.org  20190812           */  
+/*         PPkPub.org  20190892           */  
 /*    Released under the MIT License.     */
 require_once "ppk_swap.inc.php";
 
@@ -106,8 +106,8 @@ function checkInputs(){
     var owner_odin_uri=getUserPPkURI(document.getElementById("exist_odin_uri").value);
     var new_address=document.getElementById("new_address").value.trim();
     
-    if(new_address.length==0 || new_address.length!=42 || ! new_address.startsWith("b")){
-        alert("请输入有效的比原钱包地址（以b起始）");
+    if(new_address.length==0){
+        alert("请输入有效的绑定钱包地址");
         return;
     }
     
@@ -121,7 +121,7 @@ function checkInputs(){
 
 //打开扫码签名验证
 function makeQrCode(owner_odin_uri,new_address) {	
-    var tmp_obj={"owner_uri":owner_odin_uri,"coin_uri":mCoinUri,"address":new_address,"timestamp":getNowTimeStamp()};
+    var tmp_obj={"owner_uri":owner_odin_uri,"coin_uri":mCoinUri,"address":new_address,"timestamp":getNowTimeStampTmp()};
     
     var auth_txt = JSON.stringify(tmp_obj);//需要签名的原文
     //alert('auth_txt:'+auth_txt);
@@ -157,6 +157,11 @@ function makeQrCode(owner_odin_uri,new_address) {
     }, 5000);//5秒钟  频率按需求
 }
 
+function getNowTimeStampTmp(){
+    var timestamp1 = Date.parse( new Date());
+    return timestamp1/1000;
+}
+
 function generateQrCodeImg(str_data){
     var typeNumber = 0;
     var errorCorrectionLevel = 'L';
@@ -173,12 +178,60 @@ function getUserPPkURI(user_uri){
     }
     return user_uri;
 }
+/*
+//通过PeerWeb插件检查已绑定地址
+function checkBindedAddress(){
+    console.log("Polling address update status...");
+    
+    var exist_odin_uri=getUserPPkURI(document.getElementById("exist_odin_uri").value);
 
+    var tmp_json_hex = stringToHex(exist_odin_uri);
+    var query_uri=mCoinUri+'bindedAddress('+tmp_json_hex+')#';
+    //alert('query_uri='+query_uri);
+    //document.getElementById("debug_data").value=query_uri;
+    
+    //读取用户身份标识URI对应说明
+    PeerWeb.getPPkResource(
+        query_uri,
+        'content',
+        'callback_getBindedAddress'  //回调方法名称
+    );
+}
+
+function callback_getBindedAddress(status,obj_data){
+    if('OK'==status){
+        try{
+            //document.getElementById("debug_data").value="status_code="+obj_data.status_code+"\ntype="+obj_data.type+" \nlength="+obj_data.length+"\nservice_url="+obj_data.url;
+            
+            if(obj_data.status_code!=200){
+                //alert("未能获得已关联地址信息(status_code:"+obj_data.status_code+")！\n请稍后再试");
+                return;
+            }
+            
+            var content=window.atob(obj_data.content_base64);
+            //var content=obj_data.content_base64;
+            //document.getElementById("debug_data").value="type="+obj_data.type+" \nlength="+obj_data.length+"\ncontent="+content+"\nservice_url="+obj_data.url;
+            var obj_content=JSON.parse(content);
+            //alert("obj_content.address="+obj_content.address);
+            document.getElementById("binded_address").value=obj_content.address;
+            
+            if(obj_content.address==document.getElementById("new_address").value.trim()){
+                document.getElementById("use_exist_odin").value="已成功更新";
+            }
+        }catch(e){
+            console.log("获得的已关联地址信息有误!\n"+e);
+        }
+    }else{
+        console.log("未能获得已关联地址信息！\n请稍后再试");
+    }
+}
+*/
 function makeConfirm(owner_odin_uri,new_address){
     var requester_uri=window.location.href;
     
-    var tmp_obj={"owner_uri":owner_odin_uri,"coin_uri":mCoinUri,"address":new_address,"timestamp":getNowTimeStamp()};
+    var tmp_obj={"owner_uri":owner_odin_uri,"coin_uri":mCoinUri,"address":new_address,"timestamp":getNowTimeStampTmp()};
     mTempData = JSON.stringify(tmp_obj);//需要签名的原文
+    //alert('mTempData:'+mTempData);
     mTempDataHex = stringToHex(mTempData);
     
     document.getElementById("use_exist_odin").disabled=true;

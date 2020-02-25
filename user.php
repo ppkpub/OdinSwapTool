@@ -10,6 +10,8 @@ if(strlen($g_currentUserODIN)==0){
 }
 
 $original_user_odin=originalReqChrStr('user_odin');
+$from_want_rec_id=safeReqNumStr('from_want_rec_id');
+
 
 if(strlen($original_user_odin)==0)
     $original_user_odin=$g_currentUserODIN;
@@ -33,6 +35,10 @@ $tmp_user_bid_stat=array(
     'total'=>0,
     'status_stat'=>array()
 );
+$tmp_user_want_stat=array(
+    'total'=>0,
+    'status_stat'=>array()
+);
 
 $sqlstr = "select status_code,count(*) as counter from sells where  seller_uri='".addslashes($original_user_odin)."' group by status_code order by status_code;";
 $rs = mysqli_query($g_dbLink,$sqlstr);
@@ -53,6 +59,16 @@ if (false !== $rs) {
     }
 }
 //print_r($tmp_user_bid_stat);
+
+$sqlstr = "select status_code,count(*) as counter from wants where  wanter_uri='".addslashes($original_user_odin)."' group by status_code order by status_code;";
+$rs = mysqli_query($g_dbLink,$sqlstr);
+if (false !== $rs) {
+    while($row = mysqli_fetch_assoc($rs)){
+        $tmp_user_want_stat['total'] += $row['counter'];
+        $tmp_user_want_stat['status_stat'][$row['status_code']] = $row['counter'];
+    }
+}
+//print_r($tmp_user_want_stat);
 
 //获取附加地址
 $array_more_address_list=array();
@@ -130,6 +146,14 @@ require_once "page_header.inc.php";
         }
     }
     ?></p>
+    <P><?php echo getLang('发布求购总次数');?>: <?php 
+    echo '<a href="want_list.php?wanter_uri=',urlencode($tmp_user_info['user_odin']),'">',$tmp_user_want_stat['total'],'</a> <!--（好评率 ..%）-->, '; 
+    if(count($tmp_user_want_stat['status_stat'])>0){
+        foreach($tmp_user_want_stat['status_stat'] as $status_code=>$counter){
+            echo getStatusLabel($status_code),'(<a href="want_list.php?wanter_uri=',urlencode($tmp_user_info['user_odin']),'&status_code=',$status_code,'">',$counter,'</a>) ';
+        }
+    }
+    ?></p>
 <?php
 
 //echo $tmp_user_info['user_odin'],',',$g_currentUserODIN; 
@@ -195,7 +219,10 @@ for($ss=0;$ss<count($tmp_odin_list) ;$ss++){
         }
         echo '</td>';
     }else if($g_currentUserLevel>=2){
-        echo '<td><a href="new_sell.php?asset_id=',urlencode($tmp_asset_id),'">',getLang('发布拍卖'),'</a></td>';
+        if(strlen($from_want_rec_id)>0)
+            echo '<td><a href="new_sell.php?asset_id=',urlencode($tmp_asset_id),'&from_want_rec_id=',urlencode($from_want_rec_id),'">',getLang('卖出'),'</a></td>';
+        else
+            echo '<td><a href="new_sell.php?asset_id=',urlencode($tmp_asset_id),'">',getLang('发布拍卖'),'</a></td>';
     }else{
         echo '<td>',getLang('体验帐户，不能发起拍卖'),'[<a href="help.html#testuser">',getLang('说明'),'</a>]</td>';
     }
@@ -206,7 +233,7 @@ for($ss=0;$ss<count($tmp_odin_list) ;$ss++){
 </div>
 <?php
     if(count($tmp_odin_list)>=100){
-        echo '<p align="center"><a href="user_asset_list.php?user_odin=',urlencode($original_user_odin),'&address=',urlencode($owner_address).'&start=100','">查看该地址注册的更多资产列表...<a/></p>';
+        echo '<p align="center"><a href="user_asset_list.php?user_odin=',urlencode($original_user_odin),'&address=',urlencode($owner_address),'&start=100&from_want_rec_id=',urlencode($from_want_rec_id),'">查看该地址注册的更多资产列表...<a/></p>';
     }
 
 }

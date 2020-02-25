@@ -7,15 +7,12 @@
 //error_reporting(E_ALL | E_STRICT);
 
 require_once 'config/config.inc.php';
+require_once "ppk_common_define.php";
 require_once "ppk_swap.coin.php";
 
 require_once "lang.php";
 require_once "common_func.php";
-
-define('DID_URI_PREFIX','did:'); //DID标识前缀
-define('PPK_URI_PREFIX','ppk:'); //ppk标识前缀
-define('PPK_URI_RES_FLAG','#');  //ppk标识资源版本前缀
-
+ 
 define('APP_BASE_URL',getCurrentPagePath(true)); //应用网址的基础路径
 
 define('PPK_ODINSWAP_FLAG','ODINSWAP'); //备注信息的特别标志
@@ -36,6 +33,9 @@ define('PPK_ODINSWAP_STATUS_UNCONFIRM',7); //状态定义:等待确拍超时
 define('PPK_ODINSWAP_STATUS_UNPAID',8); //状态定义: 等待支付超时
 define('PPK_ODINSWAP_STATUS_FINISH',9); //状态定义:已完成
 define('PPK_ODINSWAP_STATUS_LOSE',20); //状态定义:未中标
+
+define('PPK_ODINSWAP_STATUS_WANT',100); //状态定义:求购中
+define('PPK_ODINSWAP_STATUS_CLOSED',101); //状态定义:已结束
 
 //maintenance_exit('系统升级维护中,预计11点上线,请稍后访问...<br>System Maintaining...');
 

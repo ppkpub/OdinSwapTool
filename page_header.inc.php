@@ -28,7 +28,8 @@
     <ul class="nav navbar-nav">
         <li><a href="./"><?php echo getLang('查看竞拍');?></a></li>
         <li><a href="user.php"><?php echo getLang('发布拍卖');?></a></li>
-        <!--<li><a href="buy_list.php">求购资产</a></li>-->
+        <li><a href="want_list.php"><?php echo getLang('查看求购');?></a></li>
+        <li><a href="new_want.php"><?php echo getLang('我要求购');?></a></li>
         <?php if(strlen($g_currentUserODIN)>0){echo '<li><a href="user.php"><img src="image/user.png" width=16 height=16>',getLang('我的帐号'),'[',getSafeEchoTextToPage(friendlyLongID($g_currentUserODIN)),']</a>';} else { echo '<li><a href="login.php">',getLang('以奥丁号登录'),'</a></li><!--<li><a href="new_user.php">',getLang('注册新用户'),'</a></li>-->';}   ?>
         <li><a href="help.html"><?php echo getLang('帮助');?></a></a></li>
         <li><a href="lang_change.php"><?php echo getLang('English');?></a></a></li>

@@ -13,8 +13,29 @@ if($g_currentUserLevel<2){
   error_exit('./','该奥丁号帐户只能参与报价！<br>需设置有效身份验证密钥并通过验证后才能发起拍卖。<br>This account only can bid.');
 }
 
-$asset_id=safeReqChrStr('asset_id');
+$suggest_coin_type = DEFAULT_COIN_TYPE;
+$suggest_start_amount = "0.0";
+    
+$from_want_rec_id=safeReqNumStr('from_want_rec_id');
+if(strlen($from_want_rec_id)>0){
+    $sqlstr = "SELECT wants.* FROM wants where want_rec_id='$from_want_rec_id' and status_code='".PPK_ODINSWAP_STATUS_WANT."';";
+    $rs = mysqli_query($g_dbLink,$sqlstr);
+    if (!$rs) {
+      echo 'Not existed want record.';
+      exit(-1);  
+    }
+    $from_want_record = mysqli_fetch_assoc($rs);
 
+    if(!$from_want_record){
+      echo 'Not existed want record.';
+      exit(-1);  
+    }
+    
+    $suggest_coin_type = $from_want_record['coin_type'];
+    $suggest_start_amount = $from_want_record['offer_amount'];
+}
+
+$asset_id=safeReqChrStr('asset_id');
 if(strlen($asset_id)==0){
   error_exit('./', '无效的ODIN短标识. Invalid Short ODIN.');
 }
@@ -85,6 +106,7 @@ if($tmp_user_info['register']!= $tmp_odin_info['register']){
 <form class="form-horizontal" action="new_sell_confirm.php" method="post">
   <input type="hidden" name="form" value="new_sell">
   <input type="hidden" name="asset_id" value="<?php safeEchoTextToPage( $asset_id );?>">
+  <input type="hidden" name="from_want_rec_id" value="<?php safeEchoTextToPage( $from_want_rec_id );?>">
 
   <div class="form-group">
     <label for="seller_odin" class="col-sm-2 control-label"><?php echo getLang('发布者身份标识');?></label>
@@ -106,7 +128,7 @@ if($tmp_user_info['register']!= $tmp_odin_info['register']){
       <select class="form-control" name="coin_type" id="coin_type" onchange="updateRmbValue();" size=3>
           <?php
           foreach($gArraySupportedCoinTypeList as $tmp_coin_type){
-              echo '<option value="',$tmp_coin_type,'" ',( $tmp_coin_type==DEFAULT_COIN_TYPE ? 'selected':'') ,'>',getCoinName($tmp_coin_type),'(',getCoinSymbol($tmp_coin_type),')</option>';
+              echo '<option value="',$tmp_coin_type,'" ',( $tmp_coin_type==$suggest_coin_type ? 'selected':'') ,'>',getCoinName($tmp_coin_type),'(',getCoinSymbol($tmp_coin_type),')</option>';
           }
           ?>
       </select>
@@ -116,8 +138,8 @@ if($tmp_user_info['register']!= $tmp_odin_info['register']){
   <div class="form-group">
     <label for="start_amount" class="col-sm-2 control-label"><?php echo getLang('起始报价');?></label>
     <div class="col-sm-10">
-      <input type="text" class="form-control"  name="start_amount" id="start_amount" value="0.00"  onchange="updateRmbValue();" ><br>
-      <font size="-1"><?php echo getLang('约');?> ¥<span id='start_rmb_value'>0</span><?php echo getLang('元');?></font> (<?php echo getLang('不填写或输入0表示无底价拍卖');?>)
+      <input type="text" class="form-control"  name="start_amount" id="start_amount" value="<?php echo $suggest_start_amount; ?>"  onchange="updateRmbValue();" ><br>
+      <font size="-1"><?php echo getLang('约');?> ¥<span id='start_rmb_value'><?php echo ceil($suggest_start_amount * $gArrayCoinPriceCNY[$suggest_coin_type]); ?></span><?php echo getLang('元');?></font> (<?php echo getLang('不填写或输入0表示无底价拍卖');?>)
     </div>
   </div>
   

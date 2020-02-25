@@ -2,6 +2,7 @@
 define('COIN_TYPE_BITCOIN','bitcoin:');   
 define('COIN_TYPE_BITCOINCASH','ppk:bch/');   
 define('COIN_TYPE_BYTOM','ppk:joy/btm/');   
+define('COIN_TYPE_MOVTEST','ppk:joy/movtest/');   
 
 //导入币种基础信息
 $gArrayCoinTypeSet=@json_decode(file_get_contents('config/coin_info.json'),true);

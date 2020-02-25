@@ -36,34 +36,13 @@ if( !empty($user_odin_uri) ){
             exit(-1);
         }
         
-        //获取公钥
-        $tmp_user_info = getPubUserInfo($user_odin_uri);
-        $str_pubkey=$tmp_user_info['pubkey'];
-
-        if(strlen($str_pubkey)==0 ){
-            $arr = array('code' => 501, 'msg' => '没有获得对应公钥. Invalid pubkey!');
+        $arr=authSignatureOfODIN($user_odin_uri,$str_original,$user_sign);
+        
+        if($arr['code']==0){
+            $user_loginlevel=2;
+        }else{
             responseResult($response_type,$arr);
             exit(-1);
-        }else{
-            $user_loginlevel=2;
-            
-            //验证签名
-            $array_sign_chunks=explode(':',$user_sign);
-            if($array_sign_chunks[0]=='bitcoin_secp256k1'){ //用比特币签名算法验证签名
-                $tmp_check_url=PTTP_NODE_API_URL.'check_sign.php?pubkey='.urlencode($str_pubkey).'&sign='.urlencode($array_sign_chunks[1]).'&algo='.urlencode($array_sign_chunks[0]).'&original='.urlencode($str_original);
-
-                $result=trim(file_get_contents($tmp_check_url));
-
-                if(strcasecmp($result,'OK')!=0){
-                    $arr = array('code' => 502, 'msg' => '比特币签名算法验证未通过. Invalid bitcoin signature!');
-                    responseResult($response_type,$arr);
-                    exit(-1);
-                }
-            }else if(!rsaVerify($str_original, $str_pubkey, $array_sign_chunks[1],$array_sign_chunks[0])){ //其他默认尝试用RSA算法验证
-                $arr = array('code' => 503, 'msg' => 'RSA签名验证未通过. Invalid RSA signature!');
-                responseResult($response_type,$arr);
-                exit(-1);
-            }
         }
     }
     
@@ -84,16 +63,35 @@ if( !empty($user_odin_uri) ){
         exit(-1);
     }
 
-    $arr = array('code' => 0, 'msg' => '扫码验证通过，请回到所登录设备上继续访问。user_sign verified ok as '.$user_odin_uri);
+    $arr = array(
+        'code' => 0, 
+        'msg' => '<h3>扫码验证奥丁号通过<br>ODIN verified OK</h3><br><P><font color="#FF7026">'.getSafeEchoTextToPage($user_odin_uri).'</font><br><br>请回到所登录设备或网站上继续访问。<br>Please go back the device or page to continue. </p>'
+    );
     responseResult($response_type,$arr);
     exit(0);
+
 }
 
 function responseResult($response_type,$array_result){
     if($response_type==='html'){
+        /*
         echo '<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>';
         echo '<h3>',$array_result['msg'],'</h3>';
         echo "<p align=center><br><input type=button value=' << 返回 '  name=B1 onclick='history.back(-1)'></p>";
+        */
+        
+        echo '<html xmlns="http://www.w3.org/1999/xhtml"><head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ODIN verified OK</title>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>';
+        echo '<center><br><br>',$array_result['msg'],'</center>';
+        echo "<p align=center><br><input type=button value=' << 返回 '  name=B1 onclick='history.back(-1)'></p>";
+        
     }else if($response_type=='image'){//微信小程序的图片形式
         //需安装php-gd库  apt-get install php7.2-gd  
         //然后编辑php.ini 搜索“ extension=gd2 ” 把前面的“ ； ”去掉

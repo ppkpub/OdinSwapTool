@@ -13,8 +13,9 @@ if($g_currentUserLevel<2){
   error_exit('./', '该奥丁号帐户只能参与报价！<br>需设置有效身份验证密钥并通过验证后才能发起拍卖。<br>This account only can bid.');
 }
 
-$asset_id=safeReqChrStr('asset_id');
+$from_want_rec_id=safeReqNumStr('from_want_rec_id');
 
+$asset_id=safeReqChrStr('asset_id');
 if(strlen($asset_id)==0){
   error_exit('./', '无效的奥丁号. Invalid ODIN.');
 }
@@ -65,7 +66,7 @@ $start_utc=$pub_utc; //缺省是发布即开始
 
 $end_utc = ($bid_hours>0) ? $start_utc + $bid_hours*60*60  : PPK_ODINSWAP_LONGTIME_UTC ;
 
-$sql_str="insert into sells (seller_uri,full_odin_uri,asset_id ,recommend_names, remark, coin_type, start_amount, status_code, start_utc,end_utc,pub_utc) values ('$g_currentUserODIN','$full_odin_uri','$asset_id','$recommend_names','$remark','$coin_type','$start_amount','".PPK_ODINSWAP_STATUS_BID."','$start_utc','$end_utc','$pub_utc')";
+$sql_str="insert into sells (seller_uri,full_odin_uri,asset_id ,recommend_names, remark, coin_type, start_amount, status_code, start_utc,end_utc,pub_utc,from_want_rec_id) values ('$g_currentUserODIN','$full_odin_uri','$asset_id','$recommend_names','$remark','$coin_type','$start_amount','".PPK_ODINSWAP_STATUS_BID."','$start_utc','$end_utc','$pub_utc',".(strlen($from_want_rec_id)>0 ? $from_want_rec_id:"null").")";
 //echo $sql_str;
 $result=@mysqli_query($g_dbLink,$sql_str);
 if(!$result)

@@ -8,6 +8,9 @@ switch($_REQUEST['backpage']){ //严格检查和组织网址，避免注入风�
     case 'new_sell':
         $back_url='new_sell.php';
         break;
+    case 'new_want':
+        $back_url='new_want.php';
+        break;
     default:
         $back_url='./';
 }
@@ -91,7 +94,14 @@ window.onload=function(){
 
 function init(){
     console.log("init...");
-    if(typeof(PeerWeb) !== 'undefined'){ //检查PPk开放协议相关PeerWeb JS接口可用性
+    if(typeof(PeerWeb) == 'undefined'){ //检查PPk开放协议相关PeerWeb JS接口可用性
+        console.log("PeerWeb not valid");
+        //alert("PeerWeb not valid. Please visit by PPk Browser For Android v0.2.6 above.");
+
+        //显示扫码登录
+        document.getElementById('qrcode_area').style.display="";
+        makeQrCode();
+    }else{
         console.log("PeerWeb enabled");
         //document.getElementById("use_exist_odin").disabled=false;
         
@@ -102,15 +112,6 @@ function init(){
         PeerWeb.getDefaultODIN(
             'callback_getDefaultODIN'  //回调方法名称
         );
-        
-        
-    }else{
-        console.log("PeerWeb not valid");
-        //alert("PeerWeb not valid. Please visit by PPk Browser For Android v0.2.6 above.");
-
-        //显示扫码登录
-        document.getElementById('qrcode_area').style.display="";
-        makeQrCode();
     }
 }
 
