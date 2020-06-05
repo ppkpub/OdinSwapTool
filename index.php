@@ -1,236 +1,210 @@
 <?php
-/*   PPK JoyAsset SwapService DEMO        */
-/*         PPkPub.org  20190415           */  
+/*       PPK JoyAsset SwapService         */
+/*         PPkPub.org  20200315           */  
 /*    Released under the MIT License.     */
 require_once "ppk_swap.inc.php";
 require_once "page_header.inc.php";
 
 //检查是否HTTPS安全访问
-$current_url=getCurrentUrl(true);
+$current_url=\PPkPub\Util::getCurrentUrl(true);
 if( FORCE_HTTPS && strtolower(substr($current_url,0,5)) == 'http:' ){
     $https_url='https'.substr($current_url,4);
     header("location: ".$https_url);
     exit(-1);
 }
 
-$pagenum=50;
-$start=0+safeReqNumStr('start');
 
-$orderby=safeReqChrStr('orderby');
+$orderby=\PPkPub\Util::safeReqChrStr('orderby');
 $orderby_col_name='';
-switch($orderby){
-    case 'lastprice':
-        $orderby_col_name='last_price';
-        break;
-    case 'lastpricedesc':
-        $orderby_col_name='last_price desc';
-        break;
-    case 'lastpub':
-        $orderby_col_name='sell_rec_id desc';
-        break;
-    case 'lastbid':
-        $orderby_col_name='status_code,last_bid_rec_id desc';
-        break;
-    case 'odin':
-        $orderby_col_name='LENGTH(asset_id),asset_id';
-        break;
-    case 'odindesc':
-        $orderby_col_name='LENGTH(asset_id) DESC,asset_id DESC';
-        break;
-    case 'status':
-        $orderby_col_name='status_code,end_utc';
-        break;
-    case 'statusdesc':
-        $orderby_col_name='status_code desc,end_utc desc';
-        break;
-}
 
 $str_query_reqs='';
-$str_query_sets='1';
-
-
-$q_key_posn=safeReqChrStr('q_key_posn');
-if(strlen($q_key_posn)>0)
-    $str_query_reqs .="&q_key_posn=".urlencode($q_key_posn);
-
-
-$q_include_keys=safeReqChrStr('q_include_keys');
-if(strlen($q_include_keys)>0){
-    $tmp_sub_query='';
-    $str_query_reqs .="&q_include_keys=".urlencode($q_include_keys);
-    $tmp_keys=explode(',',$q_include_keys);
-    
-    if($q_key_posn=='se'){
-        $tmp_sub_query1="";
-        $tmp_sub_query2="";
-        
-        for($kk=0;$kk<count($tmp_keys);$kk++){
-            $tmp_key=trim($tmp_keys[$kk]);
-            
-            if(strlen($tmp_key)>0){
-               $tmp_key=convertLetterToNumberInRootODIN($tmp_key);
-               if(strlen($tmp_sub_query1)>0){
-                 $tmp_sub_query1 .=' or ';
-                 $tmp_sub_query2 .=' or ';
-               }
-               
-               $tmp_sub_query1 .= " sells.asset_id like '%$tmp_key' "; 
-               $tmp_sub_query2 .= " sells.asset_id like '$tmp_key%' "; 
-            }
-        }
-        
-        $tmp_sub_query .= "($tmp_sub_query1) and ($tmp_sub_query2)";
-    }else{
-        for($kk=0;$kk<count($tmp_keys);$kk++){
-            $tmp_key=trim($tmp_keys[$kk]);
-            
-            if(strlen($tmp_key)>0){
-               $tmp_key=convertLetterToNumberInRootODIN($tmp_key);
-               
-               if(strlen($tmp_sub_query)>0)
-                 $tmp_sub_query .=' or ';
-             
-               if($q_key_posn=='s')
-                   $tmp_sub_query .= " sells.asset_id like '$tmp_key%' "; 
-               else if($q_key_posn=='e')
-                   $tmp_sub_query .= " sells.asset_id like '%$tmp_key' "; 
-               else
-                   $tmp_sub_query .= " sells.asset_id like '%$tmp_key%' "; 
-            }
-        }
-    }
-    if(strlen($tmp_sub_query)>0)
-        $str_query_sets .= " and ($tmp_sub_query) ";
-    
-} 
-
-$q_exclude_keys=safeReqChrStr('q_exclude_keys');
-if(strlen($q_exclude_keys)>0){
-    $str_query_reqs .="&q_exclude_keys=".urlencode($q_exclude_keys);
-    $tmp_sub_query='';
-    $tmp_keys=explode(',',$q_exclude_keys);
-    for($kk=0;$kk<count($tmp_keys);$kk++){
-        $tmp_key=trim($tmp_keys[$kk]);
-        if(strlen($tmp_key)>0){
-           $tmp_key=convertLetterToNumberInRootODIN($tmp_key);
-           
-           if(strlen($tmp_sub_query)>0)
-               $tmp_sub_query .=' or ';
-           
-           if($q_key_posn=='s')
-               $tmp_sub_query .= " sells.asset_id like '$tmp_key%' "; 
-           else if($q_key_posn=='e')
-               $tmp_sub_query .= " sells.asset_id like '%$tmp_key' "; 
-           else if($q_key_posn=='se')
-               $tmp_sub_query .= " (sells.asset_id like '%$tmp_key' or sells.asset_id like '$tmp_key%'  ) "; 
-           else
-               $tmp_sub_query .= " sells.asset_id like '%$tmp_key%' "; 
-           
-        }
-    }
-   
-    if(strlen($tmp_sub_query)>0)
-        $str_query_sets .= " and NOT ($tmp_sub_query) ";
-}
-
-$q_sell_status=safeReqNumStr('q_sell_status');
-if(strlen($q_sell_status)>0){
-    $str_query_reqs .="&q_sell_status=".urlencode($q_sell_status);
-    $str_query_sets .= " and sells.status_code='$q_sell_status' "; 
-}
-
-$q_length_limit=safeReqNumStr('q_length_limit');
-if(strlen($q_length_limit)>0){
-    $str_query_reqs .="&q_length_limit=".urlencode($q_length_limit);
-    $str_query_sets .= " and length(sells.asset_id)=$q_length_limit "; 
-}
-
-//echo $str_query_sets;
 
 ?>
-<div class="table-responsive">
-<p><?php echo getLang('快速查询');?>: <a href="index.php?q_include_keys=6,8&q_key_posn=e"><?php echo getLang('尾数6和8');?></a> | <a href="index.php?q_exclude_keys=4"><?php echo getLang('不带4');?></a> | <a href="index.php?q_include_keys=111,222,333,444,555,666,777,888,999,000"><?php echo getLang('类似666');?></a> | <a href="index.php?q_include_keys=123,234,345,456,567,678,789"><?php echo getLang('类似123');?></a> | <a href="index.php?q_sell_status=<?php echo PPK_ODINSWAP_STATUS_BID;?>&orderby=lastpub"><?php echo getLang('新发布');?></a> | <a href="index.php?q_sell_status=<?php echo PPK_ODINSWAP_STATUS_BID;?>&orderby=lastbid"><?php echo getLang('最近报价');?></a> | <a href="index.php?q_sell_status=<?php echo PPK_ODINSWAP_STATUS_ACCEPT;?>"><?php echo getLang('达成意向');?></a> |  <a href="index.php?q_sell_status=<?php echo PPK_ODINSWAP_STATUS_PAID;?>"><?php echo getLang('已付款');?></a> |  <a href="index.php?q_sell_status=<?php echo PPK_ODINSWAP_STATUS_FINISH;?>"><?php echo getLang('已完成');?></a> | <a href="query.php"><?php echo getLang('自定义');?></a></p>
-<table class="table table-striped">
-<thead>
-    <tr>
-        <th><?php echo getLang('拍卖奥丁号');?><a href="?orderby=<?php echo $orderby=='odin'?'odindesc':'odin',$str_query_reqs; ?>"><font size="-2">[<?php echo getLang('排序');?>]</font></a></th>
-        <th><?php echo getLang('最新报价');?><a href="?orderby=<?php echo $orderby=='lastprice'?'lastpricedesc':'lastprice',$str_query_reqs; ?>"><font size="-2">[<?php echo getLang('排序');?>]</font></a></th>
-        <th><?php echo getLang('状态');?><a href="?orderby=<?php echo $orderby=='status'?'statusdesc':'status',$str_query_reqs; ?>"><font size="-2">[<?php echo getLang('排序');?>]</font></a></th>
-        <th><?php echo getLang('拍卖方');?></th>
-    </tr>
-</thead>
+<style type="text/css">
+    .cardBox {
+        width: 200px;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+        text-align: center;
+        float: left;
+        margin-right: 10px;
+        padding: 5px;
+        padding-top: 15px;
+    }
 
-<tbody>
+    .headerBox {
+        color: #fff;
+        padding: 10px;
+        font-size: 15px;
+        height: 60px;
+    }
+
+    .bodyBox {
+        padding: 10px;
+    }
+
+    .bodyBox p {
+        margin-left: 5px;
+    }
+</style>
+        
+<h2>　<?php echo getLang('拍卖');?></h2>
+
+<div class="container">
 <?php
 //查询带有拍卖数据的数据库记录
-$sqlstr = 'SELECT sells.*,view_sell_bid.*,IFNULL(max_bid_amount,start_amount) AS last_price,GREATEST(IFNULL(last_bid_utc,pub_utc),update_utc) AS last_change_utc FROM sells LEFT JOIN (select sell_rec_id AS bid_sell_rec_id,MAX(bid_amount) AS max_bid_amount,MAX(bid_rec_id) AS last_bid_rec_id,MAX(bid_utc) AS last_bid_utc  from bids group by bid_sell_rec_id ) AS view_sell_bid ON view_sell_bid.bid_sell_rec_id=sells.sell_rec_id  WHERE '.$str_query_sets.' ORDER BY '.( strlen($orderby_col_name)>0?$orderby_col_name.',':'' ).' last_change_utc DESC,sell_rec_id DESC LIMIT '.$start.','.$pagenum.';';
+$sqlstr = 'SELECT sells.*,view_sell_bid.*,IFNULL(max_bid_amount,start_amount) AS last_price,GREATEST(IFNULL(last_bid_utc,pub_utc),update_utc) AS last_change_utc FROM sells LEFT JOIN (select sell_rec_id AS bid_sell_rec_id,MAX(bid_amount) AS max_bid_amount,MAX(bid_rec_id) AS last_bid_rec_id,MAX(bid_utc) AS last_bid_utc  from bids group by bid_sell_rec_id ) AS view_sell_bid ON view_sell_bid.bid_sell_rec_id=sells.sell_rec_id ORDER BY last_change_utc DESC,sell_rec_id DESC LIMIT 5';
 //echo $sqlstr;
 
 $result_num=0;
 $rs = mysqli_query($g_dbLink,$sqlstr);
 if (false !== $rs) {
     while ($row = mysqli_fetch_assoc($rs)) {
-        //$str_pub_time = formatTimestampForView($obj_set['pub_utc'],false);
-        echo '<tr>';
-        
         $tmp_title=$row['recommend_names'];
         if(empty($tmp_title)){
             $tmp_title=$row['asset_id'];
         }
-            
-        echo '<td><a href="sell.php?sell_rec_id=',$row['sell_rec_id'],'">',getSafeEchoTextToPage($tmp_title),'</a><br><font size="-1">',PPK_URI_PREFIX.getSafeEchoTextToPage(friendlyLongID($row['asset_id'])),'</font></td>';
         
-        echo '<td><a href="sell.php?sell_rec_id=',$row['sell_rec_id'],'">';
+        //$tmp_title=\PPkPub\Util::friendlyLongStrUTF8($tmp_title,20,false);
+        
+        $tmp_view_rec_link = 'sell.php?sell_rec_id='.$row['sell_rec_id'];
+        
         if(isset($row['max_bid_amount'])){
-            echo trimz($row['max_bid_amount']),' ',getSafeEchoTextToPage(getCoinSymbol($row['coin_type']));
-            $tmp_rmb_value=getCoinValueOfCNY($row['max_bid_amount'],$row['coin_type']);
+            $tmp_bid_info = \PPkPub\Util::trimz($row['max_bid_amount']).' <small>'.\PPkPub\Util::getSafeEchoTextToPage(getCoinSymbol($row['coin_type'])).'</small>';
+            $tmp_bid_rmb_value=getCoinValueOfCNY($row['max_bid_amount'],$row['coin_type']);
         }else if($row['start_amount']==0){
-            echo getLang('无底价');
-            $tmp_rmb_value=0;
+            $tmp_bid_info = getLang('无底价');
+            $tmp_bid_rmb_value=0;
         }else{
-            echo trimz($row['start_amount']),' ',getSafeEchoTextToPage(getCoinSymbol($row['coin_type']));
-            $tmp_rmb_value=getCoinValueOfCNY($row['start_amount'],$row['coin_type']);
+            $tmp_bid_info = \PPkPub\Util::trimz($row['start_amount']).' <small>'.\PPkPub\Util::getSafeEchoTextToPage(getCoinSymbol($row['coin_type'])).'</small>';
+            $tmp_bid_rmb_value=getCoinValueOfCNY($row['start_amount'],$row['coin_type']);
         }
-        echo '</a>';
-        if($tmp_rmb_value>0){
-            echo '<br><font size="-1">',getLang('约'),' ¥',$tmp_rmb_value,' ',getLang('元'),'</font>';
-            if(strlen($row['last_bid_utc'])>0)
-                echo ' <font size="-2">(',friendlyTime($row['last_bid_utc']),')</font>';
+        
+        if($tmp_bid_rmb_value>0){
+           $tmp_bid_rmb_info=getLang('约').' ¥'.$tmp_bid_rmb_value.' '.getLang('元');
+        }else{
+           $tmp_bid_rmb_info='&emsp;';
         }
-        echo '</td>';
         
-        echo '<td>',getStatusLabel($row['status_code']);
-        if( $row['status_code']==PPK_ODINSWAP_STATUS_BID && $row['end_utc']!=PPK_ODINSWAP_LONGTIME_UTC)  
-            echo '<br><font size="-1">' , friendlyTime($row['end_utc']).'</font>'; 
-        echo '</td>';
+        if( $row['status_code']==PPK_ODINSWAP_STATUS_BID ){
+            $tmp_end_time_info = $row['end_utc']==PPK_ODINSWAP_LONGTIME_UTC  
+                                    ? getLang('长期'):\PPkPub\Util::friendlyTime($row['end_utc']); 
+
+            if(strlen($row['last_bid_utc'])>0){
+                $tmp_last_change_info = getLang('最新报价').': '.\PPkPub\Util::friendlyTime($row['last_bid_utc']);
+            }else{
+                $tmp_last_change_info = getLang('开始拍卖').': '.\PPkPub\Util::friendlyTime($row['start_utc']);
+            }
+        }else{
+            $tmp_end_time_info = '&emsp;';
+            $tmp_last_change_info = '&emsp;';
+        }
         
-        echo '<td>',getSafeEchoTextToPage($row['seller_uri']),'</td>';
-        echo '</tr>';
+        //$str_pub_time = \PPkPub\Util::formatTimestampForView($obj_set['pub_utc'],false);
+?>
+  <div class="cardBox">
+    <div class="headerBox <?php echo getStatusStyle($row['status_code']);?>" >
+        <p>
+            <a title="<?php echo getLang('查看详情');?>" style="cursor: pointer; color:white" href="<?php echo $tmp_view_rec_link; ?>"><?php \PPkPub\Util::safeEchoTextToPage($tmp_title);?></a>
+        </p>
+    </div>
+    <div class="bodyBox">
+        <p><?php echo getLang('拍卖奥丁号');?>: <a href="<?php echo $tmp_view_rec_link; ?>" class="label <?php echo getStatusStyle($row['status_code']);?>" style="border-radius: .25em;"><?php \PPkPub\Util::safeEchoTextToPage(\PPkPub\Util::friendlyLongID($row['asset_id']));?></a></p>
+
+        <p><?php echo $tmp_bid_info;?></p>
+
+        <!--<p><small><?php echo $tmp_bid_rmb_info;?></small></p>-->
         
+        <p><small><?php echo $tmp_last_change_info;?></small></p>
+        <p>
+            <a href="<?php echo $tmp_view_rec_link; ?>" class="label <?php echo getStatusStyle($row['status_code']);?>" style="border-radius: .25em;"><?php echo getStatusLabel($row['status_code']);?></a> <small><?php echo $tmp_end_time_info;?></small>
+        </p>
+        
+        <p><?php echo getLang('拍卖方');?>: <?php echo getUserLabelHTML($row['seller_uri'],false,$tmp_view_rec_link);?></p>
+    </div>
+  </div>    
+<?php
         $result_num++;
     }
 }
 
 
 ?>
-</tbody>
-</table>
 </div>
-<center>
+
+<h3 align="center"><a href="sell_list.php" class="btn btn-primary"><?php echo getLang('更多拍卖记录');?> >></a></h3>
+
+<h2>　<?php echo getLang('求购');?></h2>
+
+<div class="container">
 <?php
-$page_base_url='?orderby='.$orderby.$str_query_reqs.'&start=';
+$sqlstr = 'SELECT wants.*,view_want_sell.*,GREATEST(wants.pub_utc,IFNULL(last_sell_pub_utc,0)) AS last_change_utc FROM wants LEFT JOIN (SELECT last_sell_rec_id,from_want_rec_id ,asset_id as last_sell_asset_id,recommend_names as last_sell_recommend_names,pub_utc AS last_sell_pub_utc FROM sells,(SELECT MAX(sell_rec_id) as last_sell_rec_id  FROM sells WHERE NOT from_want_rec_id is NULL GROUP BY from_want_rec_id)  last_want_sells WHERE sells.sell_rec_id=last_want_sells.last_sell_rec_id   ) AS view_want_sell ON view_want_sell.from_want_rec_id=wants.want_rec_id ORDER BY last_change_utc DESC,want_rec_id DESC LIMIT 5 ';
 
-if($start>=$pagenum) {//说明有上一页
-    echo '<a href="'.$page_base_url.($start-$pagenum).'">《',getLang('上一页'),'</a> ';
-}
+$rs = mysqli_query($g_dbLink,$sqlstr);
+if (false !== $rs) {
+    while ($row = mysqli_fetch_assoc($rs)) {
+        $tmp_title=$row['want_names'];
+        
+        $tmp_view_rec_link = 'want.php?want_rec_id='.$row['want_rec_id'];
+        
+        if(isset($row['max_bid_amount'])){
+            $tmp_bid_info = \PPkPub\Util::trimz($row['max_bid_amount']).' <small>'.\PPkPub\Util::getSafeEchoTextToPage(getCoinSymbol($row['coin_type'])).'</small>';
+            $tmp_bid_rmb_value=getCoinValueOfCNY($row['max_bid_amount'],$row['coin_type']);
+        }else if($row['offer_amount']==0){
+            $tmp_bid_info = getLang('无底价');
+            $tmp_bid_rmb_value=0;
+        }else{
+            $tmp_bid_info = \PPkPub\Util::trimz($row['offer_amount']).' <small>'.\PPkPub\Util::getSafeEchoTextToPage(getCoinSymbol($row['coin_type'])).'</small>';
+            $tmp_bid_rmb_value=getCoinValueOfCNY($row['offer_amount'],$row['coin_type']);
+        }
+        
+        if($tmp_bid_rmb_value>0){
+           $tmp_bid_rmb_info=getLang('约').' ¥'.$tmp_bid_rmb_value.' '.getLang('元');
+        }else{
+           $tmp_bid_rmb_info='&emsp;';
+        }
+        
+        if( $row['status_code']==PPK_ODINSWAP_STATUS_WANT){
+            $tmp_end_time_info=\PPkPub\Util::friendlyTime($row['end_utc']);
+            
+            if(isset($row['last_sell_rec_id'])){
+                $tmp_last_change_info = getLang('最新回应').': '.\PPkPub\Util::friendlyTime($row['last_sell_pub_utc']);
+            }else{
+                $tmp_last_change_info = getLang('开始求购').': '.\PPkPub\Util::friendlyTime($row['start_utc']);
+            }
+            
+        }else{
+            $tmp_end_time_info = '&emsp;';
+            $tmp_last_change_info = '&emsp;';
+        }
 
-echo " ",getLang('当前为第'),($start/$pagenum)+1,getLang('页')," ";
-
-if($result_num==$pagenum) {//说明有下一页
-    echo ' <a href="'.$page_base_url.($start+$pagenum).'">',getLang('下一页'),'》</a>';
+        //$str_pub_time = \PPkPub\Util::formatTimestampForView($obj_set['pub_utc'],false);
+?>
+  <div class="cardBox">
+    <div class="headerBox <?php echo getStatusStyle($row['status_code']);?>" >
+        <p>
+            <a title="<?php echo getLang('查看详情');?>" style="cursor: pointer; color:white" href="<?php echo $tmp_view_rec_link; ?>"><?php \PPkPub\Util::safeEchoTextToPage($tmp_title);?></a>
+        </p>
+    </div>
+    <div class="bodyBox">
+        <p><?php echo $tmp_bid_info;?></p>
+        
+        <!--<p><small><?php echo $tmp_want_rmb_info;?></small></p>-->
+        
+        <p><small><?php echo $tmp_last_change_info;?></small></p>
+        
+        <p><a href="<?php echo $tmp_view_rec_link; ?>" class="label <?php echo getStatusStyle($row['status_code']);?>" style="border-radius: .25em;"><?php echo getStatusLabel($row['status_code']);?></a> <small><?php echo $tmp_end_time_info;?></small>
+        </p>
+        
+        <p><?php echo getLang('求购方');?>: <?php echo getUserLabelHTML($row['wanter_uri'],false,$tmp_view_rec_link);?></p>
+    </div>
+  </div>    
+<?php
+    }
 }
 ?>
-</center>
+</div>
+
+<h3 align="center"><a href="want_list.php" class="btn btn-info"><?php echo getLang('更多求购记录');?> >></a></h3>
 
 <?php
 require_once "page_footer.inc.php";

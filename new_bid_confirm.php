@@ -9,9 +9,9 @@ if(strlen($g_currentUserODIN)==0){
   exit(-1);
 }
 
-$sell_rec_id=safeReqNumStr('sell_rec_id');
-$coin_type=safeReqChrStr('coin_type');
-$bid_amount=safeReqNumStr('bid_amount');
+$sell_rec_id=\PPkPub\Util::safeReqNumStr('sell_rec_id');
+$coin_type=\PPkPub\Util::safeReqChrStr('coin_type');
+$bid_amount=\PPkPub\Util::safeReqNumStr('bid_amount');
 
 if(strlen($sell_rec_id)==0){
   echo 'Invalid auction record ID.';
@@ -34,13 +34,19 @@ if($g_currentUserODIN == $tmp_sell_record['seller_uri']  ){
   exit(-1);
 }
 
-//检查是否达到底价
-if( $bid_amount<=0 || $bid_amount < $tmp_sell_record['start_amount']  ){
-  echo '报价数额需大于0且不能少于拍卖底价. Invalid bid amount.';
+//检查出价是否有效
+if( $bid_amount<=0  ){
+  echo '报价数额需大于0. Invalid bid amount.';
   exit(-1);
 }
+/*
+if( $bid_amount < $tmp_sell_record['start_amount']  ){
+  echo '报价数额不能少于拍卖底价. Invalid bid amount.';
+  exit(-1);
+}
+*/
 
-//$tmp_user_info=getPubUserInfo($g_currentUserODIN);
+//$tmp_user_info=\PPkPub\PTAP01DID::getPubUserInfo($g_currentUserODIN);
 //echo '<p>参拍用户: ',$g_currentUserODIN,'  , ',$tmp_user_info['register'],'</p>';
 
 
@@ -49,7 +55,7 @@ if( $bid_amount<=0 || $bid_amount < $tmp_sell_record['start_amount']  ){
 
 //在本地数据库保存拍卖纪录
 
-$remark=safeReqChrStr('remark');
+$remark=\PPkPub\Util::safeReqChrStr('remark');
 
 $bid_utc=time();
 
@@ -63,9 +69,22 @@ if(!$result)
 }
 $new_sell_rec_id=mysqli_insert_id($g_dbLink);
 
+//发送通知
+sendMsg(
+    PPK_ODINSWAP_MSG_USER_SYSTEM,
+    $tmp_sell_record['seller_uri'],
+    PPK_ODINSWAP_MSG_TYPE_SYSTEM,
+    '你拍卖的奥丁号['.\PPkPub\ODIN::PPK_URI_PREFIX.$tmp_sell_record['asset_id'].']收到了新报价.<a href="sell.php?sell_rec_id='.$sell_rec_id.'">查看&gt;&gt;</a>'
+ );
+
 require_once "page_header.inc.php";
 ?>
-<p><?php echo getLang('对应奥丁号');?>[<?php safeEchoTextToPage( $asset_id );?>]<?php echo getLang('的报价已提交。');?><br><a href="sell.php?sell_rec_id=<?php echo $sell_rec_id;?>"><?php echo getLang('点击这里查看');?></a></p>
+
+<center>
+<p><?php echo getLang('对应奥丁号');?>[<?php \PPkPub\Util::safeEchoTextToPage( $asset_id );?>]<?php echo getLang('的报价已提交。');?></p> 
+<p><a class="btn btn-success" role="button" href="sell.php?sell_rec_id=<?php echo $sell_rec_id;?>"><?php echo getLang('点击这里查看');?></a></p>
+</center>
+
 <?php
 require_once "page_footer.inc.php";
 ?>

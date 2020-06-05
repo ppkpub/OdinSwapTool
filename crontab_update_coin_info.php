@@ -6,8 +6,8 @@ require_once "ppk_swap.inc.php";
 $new_array_coin_set=$gArrayCoinTypeSet;
 
 foreach($gArraySupportedCoinTypeList as $tmp_coin_type){
-    $query_ppk_uri=$tmp_coin_type.'metadata()#';
-    $tmp_data=getPPkResource($query_ppk_uri);
+    $query_ppk_uri=$tmp_coin_type.'metadata()';
+    $tmp_data= \PPkPub\PTTP::getPPkResource($query_ppk_uri);
     //print_r($tmp_data);
     if($tmp_data['status_code']==200){
         $tmp_array=@json_decode($tmp_data['content'],true);

@@ -4,7 +4,7 @@
 /*    Released under the MIT License.     */
 require_once "ppk_swap.inc.php";
 
-$want_rec_id=safeReqNumStr('want_rec_id');
+$want_rec_id=\PPkPub\Util::safeReqNumStr('want_rec_id');
 
 if(strlen($want_rec_id)==0){
   echo 'Invalid record ID.';
@@ -14,11 +14,15 @@ if(strlen($want_rec_id)==0){
 $sqlstr = "SELECT wants.* FROM wants where want_rec_id='$want_rec_id' ;";
 $rs = mysqli_query($g_dbLink,$sqlstr);
 if (!$rs) {
-  echo 'Not existed record.';
+  echo 'DB failed.';
   exit(-1);  
 }
 $tmp_want_record = mysqli_fetch_assoc($rs);
- 
+if (!$tmp_want_record) {
+  echo 'Not existed record.';
+  exit(-1);  
+}
+
 $bCurrentUserIsWanter = ($g_currentUserODIN==$tmp_want_record['wanter_uri']) ? true:false;
      
 
@@ -40,14 +44,14 @@ require_once "page_header.inc.php";
   <div class="form-group">
     <label for="want_names" class="col-sm-2 control-label"><?php echo getLang('想买的奥丁号');?></label>
     <div class="col-sm-10">
-      <span id="want_names"><?php safeEchoTextToPage( $tmp_want_record['want_names'] );?></span>
+      <span id="want_names"><?php \PPkPub\Util::safeEchoTextToPage( $tmp_want_record['want_names'] );?></span>
     </div>
   </div>      
   
   <div class="form-group">
     <label for="offer_amount" class="col-sm-2 control-label"><?php echo getLang('期望价格');?></label>
     <div class="col-sm-10">
-      <span id="offer_amount"><?php echo $tmp_want_record['offer_amount']==0 ? getLang('无底价'):trimz($tmp_want_record['offer_amount']);?> (<?php echo getSafeEchoTextToPage(getCoinSymbol($tmp_want_record['coin_type'])); ?>)</span>
+      <span id="offer_amount"><?php echo $tmp_want_record['offer_amount']==0 ? getLang('无底价'):\PPkPub\Util::trimz($tmp_want_record['offer_amount']);?> (<?php echo \PPkPub\Util::getSafeEchoTextToPage(getCoinSymbol($tmp_want_record['coin_type'])); ?>)</span>
     </div>
   </div>
   
@@ -55,7 +59,7 @@ require_once "page_header.inc.php";
   <div class="form-group">
     <label for="remark" class="col-sm-2 control-label"><?php echo getLang('详细说明');?></label>
     <div class="col-sm-10">
-     <textarea class="form-control" name="remark" id="remark" readonly rows=3 ><?php safeEchoTextToPage( $tmp_want_record['remark'] );?></textarea>
+     <textarea class="form-control" name="remark" id="remark" readonly rows=3 ><?php \PPkPub\Util::safeEchoTextToPage( $tmp_want_record['remark'] );?></textarea>
      <span><?php echo getLang('注意：出于资金安全，建议采用求购方身份标识对应钱包地址作为奥丁号转移地址，并仔细核对币种数额。不要随意向通过微信、Telegram等聊天工具联系时提供的地址转账。');?></span>
     </div>
   </div>
@@ -79,11 +83,11 @@ require_once "page_header.inc.php";
         if($tmp_want_record['end_utc']==PPK_ODINSWAP_LONGTIME_UTC)  
             echo getLang('长期');
         else
-            echo formatTimestampForView($tmp_want_record['end_utc'],false),' , ' , friendlyTime($tmp_want_record['end_utc']); 
+            echo \PPkPub\Util::formatTimestampForView($tmp_want_record['end_utc'],false),' , ' , \PPkPub\Util::friendlyTime($tmp_want_record['end_utc']); 
      }else if($tmp_want_record['status_code']==PPK_ODINSWAP_STATUS_CLOSED){
         echo getLang('已结束');
      }else{
-        echo formatTimestampForView($tmp_want_record['end_utc'],false); 
+        echo \PPkPub\Util::formatTimestampForView($tmp_want_record['end_utc'],false); 
      }
       ?> </span>
     </div>
@@ -92,7 +96,7 @@ require_once "page_header.inc.php";
   <div class="form-group">
     <label for="wanter_uri" class="col-sm-2 control-label"><?php echo getLang('求购方身份标识');?></label>
     <div class="col-sm-10">
-      <span id="wanter_uri"><a target="_blank" href="user.php?user_odin=<?php echo urlencode($tmp_want_record['wanter_uri']);?>"><?php safeEchoTextToPage( $tmp_want_record['wanter_uri'] );?></a></span>
+      <span id="wanter_uri"><?php echo getUserLabelHTML($tmp_want_record['wanter_uri']); ?></span>
     </div>
   </div>
   
@@ -147,13 +151,13 @@ if (!$rs) {
         }
 ?>
     <tr>
-        <td><a href="sell.php?sell_rec_id=<?php echo $row['sell_rec_id'];?>"><?php safeEchoTextToPage($tmp_title);?></a><br><font size="-1"><?php  echo PPK_URI_PREFIX,getSafeEchoTextToPage(friendlyLongID($row['asset_id']));?></font></td>
+        <td><a href="sell.php?sell_rec_id=<?php echo $row['sell_rec_id'];?>"><?php \PPkPub\Util::safeEchoTextToPage($tmp_title);?></a><br><font size="-1"><?php  echo \PPkPub\ODIN::PPK_URI_PREFIX,\PPkPub\Util::getSafeEchoTextToPage(\PPkPub\Util::friendlyLongID($row['asset_id']));?></font></td>
         
-        <td><a href="sell.php?sell_rec_id=<?php echo $row['sell_rec_id'];?>"><?php echo trimz($row['start_amount']) ;?></a> <?php safeEchoTextToPage(getCoinSymbol($row['coin_type'])) ;?><br>
+        <td><a href="sell.php?sell_rec_id=<?php echo $row['sell_rec_id'];?>"><?php echo \PPkPub\Util::trimz($row['start_amount']) ;?></a> <?php \PPkPub\Util::safeEchoTextToPage(getCoinSymbol($row['coin_type'])) ;?><br>
         <font size="-1"><?php echo getLang('约');?> ¥<?php echo getCoinValueOfCNY($row['start_amount'],$row['coin_type']);?><?php echo getLang('元');?></font>
         </td>
-        <td><?php echo formatTimestampForView($row['start_utc']) ;?></td>
-        <td><?php safeEchoTextToPage($row['seller_uri']) ;?></td>
+        <td><?php echo \PPkPub\Util::formatTimestampForView($row['start_utc']) ;?></td>
+        <td><?php \PPkPub\Util::safeEchoTextToPage($row['seller_uri']) ;?></td>
         <td><?php echo '<a class="btn btn-success" role="button" href="sell.php?sell_rec_id=',$row['sell_rec_id'],'">',getStatusLabel($row['status_code']),'</a>';?></td>
     </tr>
 <?php

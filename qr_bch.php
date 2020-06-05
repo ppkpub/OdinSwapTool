@@ -4,12 +4,12 @@
  */
 require_once "ppk_swap.inc.php";
 
-$coin_type=COIN_TYPE_BITCOINCASH;                    
-$from=removeCoinPrefix(safeReqChrStr('from'),$coin_type);
-$to=removeCoinPrefix(safeReqChrStr('to'),$coin_type);
-$amount_satoshi=safeReqNumStr('amount');
-$memo=originalReqChrStr('memo');
-$memo_hex=strToHex($memo);
+$coin_type=\PPkPub\PTAP02ASSET::COIN_TYPE_BITCOINCASH;                    
+$from=\PPkPub\PTAP02ASSET::removeCoinPrefix(\PPkPub\Util::safeReqChrStr('from'),$coin_type);
+$to=\PPkPub\PTAP02ASSET::removeCoinPrefix(\PPkPub\Util::safeReqChrStr('to'),$coin_type);
+$amount_satoshi=\PPkPub\Util::safeReqNumStr('amount');
+$memo=\PPkPub\Util::originalReqChrStr('memo');
+$memo_hex=\PPkPub\Util::strToHex($memo);
 
 if(empty($to) || empty($amount_satoshi) )
 {
@@ -27,23 +27,23 @@ require_once "page_header.inc.php";
 <div class="form-group">
     <label for="to" class="col-sm-2 control-label">收款地址(To)</label>
     <div class="col-sm-10">
-      <input type="text" class="form-control"  id="to" name="to" value="<?php safeEchoTextToPage($to) ;?>"  >
+      <input type="text" class="form-control"  id="to" name="to" value="<?php \PPkPub\Util::safeEchoTextToPage($to) ;?>"  >
     </div>
     
     <label for="amount_satoshi" class="col-sm-2 control-label">支付金额(Amount)</label>
     <div class="col-sm-10">
-      <input type="text" class="form-control"  id="amount" name="amount" value="<?php safeEchoTextToPage(getNormalAmount($coin_type,$amount_satoshi)) ;?>"  >
-      <input type="hidden" id="amount_satoshi" name="amount_satoshi" value="<?php safeEchoTextToPage($amount_satoshi) ;?>"  >
+      <input type="text" class="form-control"  id="amount" name="amount" value="<?php \PPkPub\Util::safeEchoTextToPage(getNormalAmount($coin_type,$amount_satoshi)) ;?>"  >
+      <input type="hidden" id="amount_satoshi" name="amount_satoshi" value="<?php \PPkPub\Util::safeEchoTextToPage($amount_satoshi) ;?>"  >
     </div>
     
     <label for="memo" class="col-sm-2 control-label">备注(Memo)</label>
     <div class="col-sm-10">
-      <textarea class="form-control" rows=3 id="memo" ><?php safeEchoTextToPage($memo) ;?></textarea>
+      <textarea class="form-control" rows=3 id="memo" ><?php \PPkPub\Util::safeEchoTextToPage($memo) ;?></textarea>
     </div>
     
     <label for="from" class="col-sm-2 control-label">付出地址(From)</label>
     <div class="col-sm-10">
-      <input type="text" class="form-control"  id="from" name="from" value="<?php safeEchoTextToPage($from) ;?>"  >
+      <input type="text" class="form-control"  id="from" name="from" value="<?php \PPkPub\Util::safeEchoTextToPage($from) ;?>"  >
     </div>
 </div>
   
@@ -81,7 +81,7 @@ function confirmPay(){
     
     var coin_type_uri='<?php echo $coin_type; ?>';
     
-    if(coin_type_uri!='<?php echo COIN_TYPE_BITCOINCASH; ?>'){
+    if(coin_type_uri!='<?php echo \PPkPub\PTAP02ASSET::COIN_TYPE_BITCOINCASH; ?>'){
         alert('暂时不支持的资产币种：'.coin_type_uri);
         return ;
     }
@@ -133,7 +133,7 @@ function callback_getExtAssetSignedTX(status,obj_data){
     if('OK'==status){
         var coin_type_uri='<?php echo $coin_type; ?>';
     
-        if(coin_type_uri!='<?php echo COIN_TYPE_BITCOINCASH; ?>'){
+        if(coin_type_uri!='<?php echo \PPkPub\PTAP02ASSET::COIN_TYPE_BITCOINCASH; ?>'){
             alert('暂时不支持的资产币种：'.coin_type_uri);
             return ;
         }

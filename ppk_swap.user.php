@@ -1,11 +1,9 @@
 <?php
-/*      PPK JoyAsset SwapService DEMO         */
-/*         PPkPub.org  20180925           */  
+/*      PPK JoyAsset SwapService DEMO     */
+/*         PPkPub.org  20200313           */  
 /*    Released under the MIT License.     */
 
-require_once('common_func.php');
-
-session_start();
+@session_start();
 
 $g_logonUserInfo=getLogonUserInfo();
 if($g_logonUserInfo!=null){
@@ -19,10 +17,10 @@ if($g_logonUserInfo!=null){
   $g_currentUserLevel=0;
 }
 
-//$g_currentUserODIN=DID_URI_PREFIX.JOYDID_PPK_URI_PREFIX.'alice#'; //tm1qzymnxuzlt6e8sjf4vc0ct6f6vkk25y27dtzdwe
+//$g_currentUserODIN=DID_URI_PREFIX.JOYDID_\PPkPub\ODIN::PPK_URI_PREFIX.'alice*'; //tm1qzymnxuzlt6e8sjf4vc0ct6f6vkk25y27dtzdwe
 //$g_currentUserName='TesterAlice';
 
-//$g_currentUserODIN=DID_URI_PREFIX.JOYDID_PPK_URI_PREFIX.'bob#'; //tm1q8sarfnju2gyft56hh38w8n0s8xwq4tcsfaeqq8
+//$g_currentUserODIN=DID_URI_PREFIX.JOYDID_\PPkPub\ODIN::PPK_URI_PREFIX.'bob*'; //tm1q8sarfnju2gyft56hh38w8n0s8xwq4tcsfaeqq8
 //$g_currentUserName='测试Bob';
 
 $g_cachedUserInfos=array();
@@ -57,4 +55,9 @@ function unsetLogonUser(){
     $sql = "delete from qrcodelogin where qruuid='" . $qruuid . "'";
     //echo $sql;
     mysqli_query($g_dbLink,$sql);
+}
+
+//基于session id进一步生成UUID（最大为32字节），用于URL参数中安全传递，避免直接暴露session_id
+function generateSessionSafeUUID(){
+    return substr(hash('ripemd160', session_id()),0,32);
 }

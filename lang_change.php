@@ -1,12 +1,12 @@
 <?php
 //Set language
-$g_currentLang=$_COOKIE['swaptool_lang'];
+$g_currentLang=$_COOKIE['ppktool_lang'];
 
 if($g_currentLang=='en') 
     $g_currentLang='cn';
 else
     $g_currentLang='en';
 
-setcookie("swaptool_lang", $g_currentLang, time()+3600);
+setcookie("ppktool_lang", $g_currentLang, time()+3600);
 
 header('location:./');

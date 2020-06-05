@@ -1,30 +1,40 @@
 <?php
 /*        PPK ODIN Swap Toolkit           */
-/*         PPkPub.org  20190415           */  
+/*         PPkPub.org  20200306           */  
 /*    Released under the MIT License.     */
 require_once "ppk_swap.inc.php";
+
+$max_odin_list_num=50;  //一次显示ODIN列表的数量
 
 if(strlen($g_currentUserODIN)==0){
   Header('Location: login.php');
   exit(-1);
 }
 
-$original_user_odin=originalReqChrStr('user_odin');
-$from_want_rec_id=safeReqNumStr('from_want_rec_id');
-
+$original_user_odin=\PPkPub\Util::originalReqChrStr('user_odin');
 
 if(strlen($original_user_odin)==0)
     $original_user_odin=$g_currentUserODIN;
 
-if(stripos($original_user_odin,PPK_URI_PREFIX)!==0 && stripos($original_user_odin,DID_URI_PREFIX)!==0){
+if(
+    \PPkPub\Util::startsWith($original_user_odin,\PPkPub\PTAP02ASSET::COIN_TYPE_MOV)
+  || \PPkPub\Util::startsWith($original_user_odin,\PPkPub\PTAP02ASSET::COIN_TYPE_BYTOM)  
+){
+    header("Location: bapp_user.php?user_odin=".$original_user_odin);
+    exit(0);
+}
+
+if(stripos($original_user_odin,\PPkPub\ODIN::PPK_URI_PREFIX)!==0 && stripos($original_user_odin,DID_URI_PREFIX)!==0){
   echo 'Invalid User ODIN.';
   exit(-1);
 }
 
-$tmp_user_info=getPubUserInfo($original_user_odin);
-$owner_address=$tmp_user_info['register'];
+$from_want_rec_id=\PPkPub\Util::safeReqNumStr('from_want_rec_id');
 
-$str_created_time = formatTimestampForView($tmp_user_info['block_time'],false);
+$tmp_user_info=\PPkPub\PTAP01DID::getPubUserInfo($original_user_odin);
+$owner_address=@$tmp_user_info['register'];
+
+$str_created_time = \PPkPub\Util::formatTimestampForView(@$tmp_user_info['block_time'],false);
 
 //统计该用户标识的相关拍卖和报价记录
 $tmp_user_sell_stat=array(
@@ -70,6 +80,18 @@ if (false !== $rs) {
 }
 //print_r($tmp_user_want_stat);
 
+$tmp_user_inbox_stat=array('total'=>0,'status_stat'=>array());
+
+$sqlstr = "select status_code,count(*) as counter from private_message where user_uri='".addslashes($original_user_odin)."' AND receiver_uri='".addslashes($original_user_odin)."'  group by status_code order by status_code;";
+$rs = mysqli_query($g_dbLink,$sqlstr);
+if (false !== $rs) {
+    while($row = mysqli_fetch_assoc($rs)){
+        $tmp_user_inbox_stat['total'] += $row['counter'];
+        $tmp_user_inbox_stat['status_stat'][$row['status_code']] = $row['counter'];
+    }
+}
+//print_r($tmp_user_inbox_stat);
+
 //获取附加地址
 $array_more_address_list=array();
 foreach($gArraySupportedCoinTypeList as $tmp_coin_type){
@@ -78,8 +100,8 @@ foreach($gArraySupportedCoinTypeList as $tmp_coin_type){
 
 $is_owner=false;
 if($tmp_user_info['user_odin']==$g_currentUserODIN 
-  || $tmp_user_info['user_odin'].'#'==$g_currentUserODIN 
-  || $tmp_user_info['user_odin']==$g_currentUserODIN.'#' ){ 
+  || $tmp_user_info['user_odin'].'*'==$g_currentUserODIN 
+  || $tmp_user_info['user_odin']==$g_currentUserODIN.'*' ){ 
     $is_owner=true;
   }
 
@@ -90,10 +112,10 @@ require_once "page_header.inc.php";
   <table width="100%" border="0">
   <tr>
   <td align="left" width="100">
-  <img  style="float:left"  src="<?php safeEchoTextToPage( $tmp_user_info['avtar']);?>" width=64 height=64>
+  <img  style="float:left"  src="<?php \PPkPub\Util::safeEchoTextToPage( $tmp_user_info['avtar']);?>" width=64 height=64>
   </td>
   <td>
-  <h1><?php safeEchoTextToPage( $tmp_user_info['name']);?></h1>
+  <h1><?php \PPkPub\Util::safeEchoTextToPage( $tmp_user_info['name']);?></h1>
   </td>
   </tr>
   </table>
@@ -102,21 +124,22 @@ require_once "page_header.inc.php";
 <ul>
 <div id='user_info'>
     <hr>
-    <P><?php echo getLang('身份标识');?>: <?php safeEchoTextToPage( $tmp_user_info['user_odin']); ?></p>
-    <P><?php echo getLang('对应PPk协议URI');?>: <?php safeEchoTextToPage( $tmp_user_info['full_odin_uri']); ?></p>
-    <P><?php echo getLang('电子邮件');?>: <?php safeEchoTextToPage( $tmp_user_info['email']); ?></p>
-    <P><?php echo getLang('创建时间');?>: <?php safeEchoTextToPage( $str_created_time); ?></p>
-    <P><?php echo getLang('拥有者主钱包地址');?>: <?php safeEchoTextToPage( $owner_address); ?></p>
+    <P><?php echo getLang('身份标识');?>: <?php \PPkPub\Util::safeEchoTextToPage( $tmp_user_info['user_odin']); ?> <?php 
+    if(!$is_owner) echo '[<a href="new_msg.php?receiver_odin_uri=',urlencode($tmp_user_info['user_odin']),'">',getLang('给他发私信'),'</a>]'; ?> </p>
+    <P><?php echo getLang('对应PPk协议URI');?>: <?php \PPkPub\Util::safeEchoTextToPage( $tmp_user_info['full_odin_uri']); ?></p>
+    <P><?php echo getLang('电子邮件');?>: <?php \PPkPub\Util::safeEchoTextToPage( $tmp_user_info['email']); ?></p>
+    <P><?php echo getLang('创建时间');?>: <?php \PPkPub\Util::safeEchoTextToPage( $str_created_time); ?></p>
+    <P><?php echo getLang('拥有者主钱包地址');?>: <?php \PPkPub\Util::safeEchoTextToPage( $owner_address); ?></p>
     <?php
-    if(!startsWith($owner_address,COIN_TYPE_BYTOM)){
+    if(!\PPkPub\Util::startsWith($owner_address,\PPkPub\PTAP02ASSET::COIN_TYPE_BYTOM)){
         echo '<P>',getLang('关联钱包地址'),': <br><ul>';
         
         foreach($array_more_address_list as $tmp_coin_type=>$tmp_address_uri){
             echo '<li>',getCoinName($tmp_coin_type),'(',$tmp_coin_type,') : ';
             if(strlen($tmp_address_uri)>0)
-                safeEchoTextToPage( removeCoinPrefix($tmp_address_uri,$tmp_coin_type) );
+                \PPkPub\Util::safeEchoTextToPage( \PPkPub\PTAP02ASSET::removeCoinPrefix($tmp_address_uri,$tmp_coin_type) );
             
-            if( $tmp_coin_type != COIN_TYPE_BITCOINCASH){ //比特现金地址是自动与注册者BTC地址相同的，不需要设置
+            if( $tmp_coin_type != \PPkPub\PTAP02ASSET::COIN_TYPE_BITCOINCASH){ //比特现金地址是自动与注册者BTC地址相同的，不需要设置
                 if( $is_owner ){
                     if(strlen($tmp_address_uri)>0)
                         echo ' <!--<a href="',$tmp_coin_type,'">',getLang('修改'),'</a>--> <a href="bind_address.php?coin_type=',urlencode($tmp_coin_type),'">',getLang('修改'),'</a>';
@@ -131,10 +154,10 @@ require_once "page_header.inc.php";
     }
     ?>
     <P><?php echo getLang('发布拍卖总次数');?>: <?php 
-    echo '<a href="sell_list.php?seller_uri=',urlencode($tmp_user_info['user_odin']),'">',$tmp_user_sell_stat['total'],'</a> <!--（好评率 ..%）-->, '; 
+    echo '<a href="sell_list.php?q_seller_uri=',urlencode($tmp_user_info['user_odin']),'">',$tmp_user_sell_stat['total'],'</a> <!--（好评率 ..%）-->, '; 
     if(count($tmp_user_sell_stat['status_stat'])>0){
         foreach($tmp_user_sell_stat['status_stat'] as $status_code=>$counter){
-            echo getStatusLabel($status_code),'(<a href="sell_list.php?seller_uri=',urlencode($tmp_user_info['user_odin']),'&status_code=',$status_code,'">',$counter,'</a>) ';
+            echo getStatusLabel($status_code),'(<a href="sell_list.php?q_seller_uri=',urlencode($tmp_user_info['user_odin']),'&q_sell_status=',$status_code,'">',$counter,'</a>) ';
         }
     }
     ?></p>
@@ -157,9 +180,17 @@ require_once "page_header.inc.php";
 <?php
 
 //echo $tmp_user_info['user_odin'],',',$g_currentUserODIN; 
-if( $is_owner ){ 
-
-    ?>
+if( $is_owner )
+{ 
+?>
+<P><?php echo getLang('收件箱');?>: <?php 
+    echo '<a href="my_msg_box.php">',$tmp_user_inbox_stat['total'],'</a> , '; 
+    if(count($tmp_user_inbox_stat['status_stat'])>0){
+        foreach($tmp_user_inbox_stat['status_stat'] as $status_code=>$counter){
+            echo getMsgStatusLabel($status_code),'(<a href="my_msg_box.php?status_code=',$status_code,'">',$counter,'</a>) ';
+        }
+    }
+    ?></p>
 <p>　　<a class="btn btn-warning" role="button"  href="logout.php"><?php echo getLang('退出登录状态');?></a></p>
 </div>
 </ul>
@@ -189,17 +220,17 @@ if (false !== $rs) {
     }
 }
 
-$tmp_odin_list=getUserOwnedRootODINs($owner_address,0,100);
+$tmp_odin_list=getUserOwnedRootODINs($owner_address,0,$max_odin_list_num);
 for($ss=0;$ss<count($tmp_odin_list) ;$ss++){
     $tmp_odin_info=$tmp_odin_list[$ss];
     
     $tmp_asset_id=$tmp_odin_info['short'];
-    $full_odin_uri=PPK_URI_PREFIX.$tmp_odin_info['full'].PPK_URI_RES_FLAG;
+    $full_odin_uri=\PPkPub\ODIN::PPK_URI_PREFIX.$tmp_odin_info['full'].\PPkPub\ODIN::PPK_URI_RESOURCE_MARK;
     
     echo '<tr>';
-    echo '<td>',getSafeEchoTextToPage($tmp_asset_id),'</td>';
-    //echo '<td><a target="_blank" href="user.php?user_odin=', urlencode($full_odin_uri),'">',getSafeEchoTextToPage($full_odin_uri),'</a></td>';
-    echo '<td>',getSafeEchoTextToPage($full_odin_uri),'</td>';
+    echo '<td>',\PPkPub\Util::getSafeEchoTextToPage($tmp_asset_id),'</td>';
+    //echo '<td><a target="_blank" href="user.php?user_odin=', urlencode($full_odin_uri),'">',\PPkPub\Util::getSafeEchoTextToPage($full_odin_uri),'</a></td>';
+    echo '<td>',\PPkPub\Util::getSafeEchoTextToPage($full_odin_uri),'</td>';
     
     if(isset($array_user_sells[$tmp_asset_id])){
         $row=$array_user_sells[$tmp_asset_id];
@@ -212,9 +243,9 @@ for($ss=0;$ss<count($tmp_odin_list) ;$ss++){
             echo '<br><a href="new_sell.php?asset_id=',urlencode($tmp_asset_id),'">',getLang('重新发起拍卖'),'</a>';
         }else{
             echo '<a class="btn btn-success" role="button" href="sell.php?sell_rec_id=',$row['sell_rec_id'],'">',getStatusLabel($row['status_code']),'</a><br>';
-            echo '<font size="-1">',getLang('起始报价'),': ',trimz($row['start_amount']),' ',getSafeEchoTextToPage(getCoinSymbol($row['coin_type'])),'<br>';
+            echo '<font size="-1">',getLang('起始报价'),': ',\PPkPub\Util::trimz($row['start_amount']),' ',\PPkPub\Util::getSafeEchoTextToPage(getCoinSymbol($row['coin_type'])),'<br>';
             if(isset($row['max_bid_amount']))
-                echo getLang('最新报价'),': ',trimz($row['max_bid_amount']),' ',getSafeEchoTextToPage(getCoinSymbol($row['coin_type']));//,' 来自 <a href="user.php?user_odin=',urlencode($row['bidder_uri']),'">',$row['bidder_uri'],'</a><br>';
+                echo getLang('最新报价'),': ',\PPkPub\Util::trimz($row['max_bid_amount']),' ',\PPkPub\Util::getSafeEchoTextToPage(getCoinSymbol($row['coin_type']));//,' 来自 <a href="user.php?user_odin=',urlencode($row['bidder_uri']),'">',$row['bidder_uri'],'</a><br>';
             echo '</font>';
         }
         echo '</td>';
@@ -232,8 +263,8 @@ for($ss=0;$ss<count($tmp_odin_list) ;$ss++){
 </table>
 </div>
 <?php
-    if(count($tmp_odin_list)>=100){
-        echo '<p align="center"><a href="user_asset_list.php?user_odin=',urlencode($original_user_odin),'&address=',urlencode($owner_address),'&start=100&from_want_rec_id=',urlencode($from_want_rec_id),'">查看该地址注册的更多资产列表...<a/></p>';
+    if(count($tmp_odin_list)>=$max_odin_list_num){
+        echo '<p align="center"><a href="user_asset_list.php?user_odin=',urlencode($original_user_odin),'&address=',urlencode($owner_address),'&start=',$max_odin_list_num,'&from_want_rec_id=',urlencode($from_want_rec_id),'">查看该地址注册的更多资产列表...<a/></p>';
     }
 
 }
@@ -243,7 +274,7 @@ for($ss=0;$ss<count($tmp_odin_list) ;$ss++){
   <div class="form-group">
     <label for="remark" class="col-sm-2 control-label">采用DID规范的用户定义</label>
     <div class="col-sm-10">
-     <textarea class="form-control" id="original_content" rows=10 ><?php safeEchoTextToPage($tmp_user_info['original_content']);?></textarea>
+     <textarea class="form-control" id="original_content" rows=10 ><?php \PPkPub\Util::safeEchoTextToPage($tmp_user_info['original_content']);?></textarea>
     </div>
   </div>
 -->

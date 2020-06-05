@@ -1,9 +1,4 @@
 <?php
-define('COIN_TYPE_BITCOIN','bitcoin:');   
-define('COIN_TYPE_BITCOINCASH','ppk:bch/');   
-define('COIN_TYPE_BYTOM','ppk:joy/btm/');   
-define('COIN_TYPE_MOVTEST','ppk:joy/movtest/');   
-
 //导入币种基础信息
 $gArrayCoinTypeSet=@json_decode(file_get_contents('config/coin_info.json'),true);
 
@@ -61,24 +56,23 @@ function getNormalAmount($coin_type,$amount_as_satoshi){
 }
 
 
-//去掉可能的币链标识前缀后得到实际使用的地址或资产标识
-function removeCoinPrefix($address_uri,$coin_type){
-    if($coin_type=='bitcoin'){ //对于比特币有特殊处理
-        $coin_type='bitcoin:';
-    }
-    return startsWith($address_uri,$coin_type) ? substr($address_uri,strlen($coin_type)):$address_uri ;
-}
-
-
 //调用币种接口查询指定用户标识已关联的该币种钱包地址
 function bindedAddress($coin_uri,$owner_odin_uri){
-    $tmp_json_hex = strToHex($owner_odin_uri);
-    $query_ppk_uri=$coin_uri.'bindedAddress('.$tmp_json_hex.')#';
-    $tmp_data=getPPkResource($query_ppk_uri);
-    //print_r($tmp_data);
+    
+    if( \PPkPub\Util::startsWith($coin_uri,\PPkPub\PTAP02ASSET::COIN_TYPE_MOV) 
+        && \PPkPub\Util::startsWith($owner_odin_uri,\PPkPub\PTAP02ASSET::COIN_TYPE_MOV))
+        return \PPkPub\PTAP02ASSET::removeCoinPrefix($owner_odin_uri,\PPkPub\PTAP02ASSET::COIN_TYPE_MOV);
+    else if( \PPkPub\Util::startsWith($coin_uri,\PPkPub\PTAP02ASSET::COIN_TYPE_BYTOM) 
+             && \PPkPub\Util::startsWith($owner_odin_uri,\PPkPub\PTAP02ASSET::COIN_TYPE_BYTOM))
+        return \PPkPub\PTAP02ASSET::removeCoinPrefix($owner_odin_uri,\PPkPub\PTAP02ASSET::COIN_TYPE_BYTOM);
+    
+    $tmp_json_hex = \PPkPub\Util::strToHex($owner_odin_uri);
+    $query_ppk_uri=$coin_uri.'bindedAddress('.$tmp_json_hex.')';
+    $tmp_data=\PPkPub\PTTP::getPPkResource($query_ppk_uri);
+    //echo "ppk_swap.coin.php bindedAddress($coin_uri,$owner_odin_uri):  \n";print_r($tmp_data);
     if($tmp_data['status_code']==200){
         $tmp_array=json_decode($tmp_data['content'],true);
-        return $tmp_array['address'];
+        return @$tmp_array['address'];
     }else{
         return null;
     }

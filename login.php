@@ -1,15 +1,18 @@
 <?php
 require_once "ppk_swap.inc.php";
 
-switch($_REQUEST['backpage']){ //严格检查和组织网址，避免注入风险
+switch(@$_REQUEST['backpage']){ //严格检查和组织网址，避免注入风险
     case 'new_bid':
-        $back_url='new_bid.php?sell_rec_id='.safeReqNumStr('sell_rec_id');
+        $back_url='new_bid.php?sell_rec_id='.\PPkPub\Util::safeReqChrStr('sell_rec_id');
         break;
     case 'new_sell':
-        $back_url='new_sell.php';
+        $back_url='new_sell.php?asset_id='.urlencode(\PPkPub\Util::safeReqChrStr('asset_id'));
         break;
     case 'new_want':
-        $back_url='new_want.php';
+        $back_url='new_want.php?asset_id='.urlencode(\PPkPub\Util::safeReqChrStr('asset_id'));
+        break;
+    case 'new_msg':
+        $back_url='new_msg.php?receiver_odin_uri='.urlencode(\PPkPub\Util::safeReqChrStr('receiver_odin_uri'));
         break;
     default:
         $back_url='./';
@@ -24,18 +27,38 @@ require_once "page_header.inc.php";
 ?>
 <h3><?php echo getLang('以奥丁号登录');?></h3>
 
-<div id="loginform_area" style="display:none;">
-<form class="form-horizontal">
+<?php 
+//演示环境下允许显示测试登录入口
+if(IS_DEMO){ 
+?>
+<div id="test_loginform_area" style="display:true;">
+<form class="form-horizontal"  id="test_login_form" action="login_verify.php">
 <div class="form-group">
-    <label for="exist_odin_uri" class="col-sm-2 control-label"><?php echo getLang('你的奥丁号');?></label>
+    <label for="exist_odin_uri" class="col-sm-2 control-label"><?php echo getLang('测试奥丁号');?></label>
     <div class="col-sm-10">
-      <input type="text" class="form-control"  id="exist_odin_uri" value="ppk:YourODIN#"  onchange="getUserOdinInfo();" readonly >
+      <input type="text" class="form-control"  id="test_odin_uri" value="<?php echo DEMO_LOGIN_USER_ODIN_URI;?>" readonly  >
     </div>
 </div>
 <div class="form-group">
     <label for="use_exist_odin" class="col-sm-2 control-label"></label>
     <div class="col-sm-10">
-      <input type='button' class="btn btn-success"  id="use_exist_odin" value=' <?php echo getLang('使用支持奥丁号的APP自主验证身份');?> ' onclick='authAsOdinOwner();' disabled="true"><br><br>
+       <input type='button' class="btn btn-danger"  id="test_login_btn" value=' 测试体验点这里（无需验证直接登录） ' onclick='confirmExistODIN(document.getElementById("test_odin_uri").value,"","","");' ><br><br>
+    </div>
+</div>
+</form>
+<?php } ?>
+<div id="loginform_area" style="display:none;">
+<form class="form-horizontal"  id="form_login">
+<div class="form-group">
+    <label for="exist_odin_uri" class="col-sm-2 control-label"><?php echo getLang('你的奥丁号');?></label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control"  id="exist_odin_uri" value="ppk:YourODIN*"  onchange="getUserOdinInfo();" readonly >
+    </div>
+</div>
+<div class="form-group">
+    <label for="use_exist_odin" class="col-sm-2 control-label"></label>
+    <div class="col-sm-10">
+      <input type='button' class="btn btn-success"  id="use_exist_odin" value=' <?php echo getLang('使用支持奥丁号的APP自主验证身份');?> ' onclick='authAsOdinOwner();' disabled="true">
     </div>
 </div>
 </form>

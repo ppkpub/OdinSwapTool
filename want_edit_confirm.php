@@ -4,7 +4,7 @@
 /*    Released under the MIT License.     */
 require_once "ppk_swap.inc.php";
 
-$want_rec_id=safeReqNumStr('want_rec_id');
+$want_rec_id=\PPkPub\Util::safeReqNumStr('want_rec_id');
 
 if(strlen($want_rec_id)==0){
   echo 'Invalid record ID.';
@@ -25,11 +25,11 @@ if (!$bCurrentUserIsWanter) {
   exit(-1);  
 }    
 
-$coin_type=safeReqChrStr('coin_type');
-$offer_amount=0+safeReqNumStr('offer_amount');
-$want_names=safeReqChrStr('want_names');
-$remark=safeReqChrStr('remark');
-$bid_hours=safeReqNumStr('bid_hours');
+$coin_type=\PPkPub\Util::safeReqChrStr('coin_type');
+$offer_amount=@(0+\PPkPub\Util::safeReqNumStr('offer_amount'));
+$want_names=\PPkPub\Util::safeReqChrStr('want_names');
+$remark=\PPkPub\Util::safeReqChrStr('remark');
+$bid_hours=\PPkPub\Util::safeReqNumStr('bid_hours');
 
 $start_utc=$tmp_want_record['start_utc'];
 
@@ -45,7 +45,12 @@ if(!$result)
 
 require_once "page_header.inc.php";
 ?>
-<p><?php echo getLang('指定求购信息已更新。');?><br><a href="want.php?want_rec_id=<?php echo $want_rec_id;?>"><?php echo getLang('点击这里查看');?></a></p> 
+
+<center>
+<p><?php echo getLang('指定求购信息已更新。') ;?></p> 
+<p><a class="btn btn-success" role="button" href="want.php?want_rec_id=<?php echo $want_rec_id;?>"><?php echo getLang('点击这里查看');?></a></p> 
+</center>
+
 <?php 
 require_once "page_footer.inc.php";
 ?>

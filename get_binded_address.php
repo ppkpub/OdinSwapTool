@@ -4,8 +4,8 @@
 /*    Released under the MIT License.     */
 require_once "ppk_swap.inc.php";
 
-$owner_odin_uri=safeReqChrStr('owner_odin_uri');
-$coin_type=safeReqChrStr('coin_type');
+$owner_odin_uri=\PPkPub\Util::safeReqChrStr('owner_odin_uri');
+$coin_type=\PPkPub\Util::safeReqChrStr('coin_type');
 
 //调用币种接口查询
 $tmp_address = bindedAddress($coin_type,$owner_odin_uri);

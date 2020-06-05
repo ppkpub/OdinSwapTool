@@ -7,7 +7,7 @@ require_once "ppk_swap.inc.php";
 $qruuid=generateSessionSafeUUID();
 
 /*
-$qruuid=safeReqChrStr('qruuid');
+$qruuid=\PPkPub\Util::safeReqChrStr('qruuid');
 
 if(strlen($qruuid)==0){
     //前端不提供uuid时，由后端生成随机的UUID 用于二维码显示的内容 和 绑定用
@@ -23,7 +23,7 @@ if($result===false)
     exit(-1);
 }
 
-$post_confirm_url=getCurrentPagePath(true).'login_verify.php?qruuid='.urlencode($qruuid);
+$post_confirm_url= \PPkPub\Util::getCurrentPagePath(true).'login_verify.php?qruuid='.urlencode($qruuid);
 //$post_confirm_url=QR_ROUTER_URL.'?login_confirm_url='.urlencode($post_confirm_url);
 $poll_url='login_poll.php?qruuid='.urlencode($qruuid);
 

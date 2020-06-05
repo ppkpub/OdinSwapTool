@@ -4,13 +4,16 @@
 /*    Released under the MIT License.     */
 require_once "ppk_swap.inc.php";
 
+$asset_id=\PPkPub\Util::safeReqChrStr('asset_id');
+
 if(strlen($g_currentUserODIN)==0){
-  Header('Location: login.php?backpage=new_want');
+  Header('Location: login.php?backpage=new_want&asset_id='.urlencode($asset_id));
   exit(-1);
 }
+
 /*
 if($g_currentUserLevel<2){
-  error_exit('./','该奥丁号帐户只能参与报价！<br>需设置有效身份验证密钥并通过验证后才能发布求购信息。<br>This account only can bid.');
+  \PPkPub\Util::error_exit('./','该奥丁号帐户只能参与报价！<br>需设置有效身份验证密钥并通过验证后才能发布求购信息。<br>This account only can bid.');
 }
 */
 require_once "page_header.inc.php";
@@ -29,14 +32,14 @@ require_once "page_header.inc.php";
   <div class="form-group">
     <label for="seller_odin" class="col-sm-2 control-label"><?php echo getLang('求购者身份标识');?></label>
     <div class="col-sm-10">
-      <span id="seller_odin"><?php safeEchoTextToPage( $g_currentUserODIN );?></span>
+      <span id="seller_odin"><?php echo getUserLabelHTML($g_currentUserODIN,false);?></span>
     </div>
   </div> 
   
   <div class="form-group">
     <label for="want_names" class="col-sm-2 control-label"><?php echo getLang('想买的奥丁号');?></label>
     <div class="col-sm-10">
-      <input type="text" class="form-control" placeholder="<?php echo getLang('列出想要的奥丁号数字或英文名称');?>" name="want_names" id="want_names" value="">
+      <input type="text" class="form-control" placeholder="<?php echo getLang('列出想要的奥丁号数字或英文名称');?>" name="want_names" id="want_names" value="<?php \PPkPub\Util::safeEchoTextToPage($asset_id);?>">
     </div>
   </div>  
   
@@ -88,7 +91,7 @@ require_once "page_header.inc.php";
   
   <div class="form-group" align="center">
     <div class="col-sm-offset-2 col-sm-10">
-      <button class="btn btn-success btn-lg" type="submit" ><?php echo getLang('马上发布');?></button>
+      <button class="btn btn-info btn-lg" type="submit" ><?php echo getLang('马上发布');?></button>
     </div>
   </div>
 

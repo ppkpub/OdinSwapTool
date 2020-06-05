@@ -4,7 +4,7 @@
 /*    Released under the MIT License.     */
 require_once "ppk_swap.inc.php";
 
-//$asset_id=safeReqChrStr('asset_id');
+//$asset_id=\PPkPub\Util::safeReqChrStr('asset_id');
 
 require_once "page_header.inc.php";
 ?>

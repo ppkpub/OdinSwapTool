@@ -5,10 +5,10 @@
  
 require_once "ppk_swap.inc.php";
 
-$owner_odin_uri=safeReqChrStr('owner_odin_uri');
-$hex=safeReqChrStr('hex');
-$owner_sign=safeReqChrStr('owner_sign');
-$response_type=safeReqChrStr('response_type');
+$owner_odin_uri=\PPkPub\Util::safeReqChrStr('owner_odin_uri');
+$hex=\PPkPub\Util::safeReqChrStr('hex');
+$owner_sign=\PPkPub\Util::safeReqChrStr('owner_sign');
+$response_type=\PPkPub\Util::safeReqChrStr('response_type');
 
 if(empty($owner_odin_uri) || empty($hex) )
 {
@@ -16,25 +16,25 @@ if(empty($owner_odin_uri) || empty($hex) )
     exit(-1);
 }
 
-$str_original= hexToStr($hex);
+$str_original= \PPkPub\Util::hexToStr($hex);
 if( !empty($owner_odin_uri) &&!empty($hex)  && !empty($owner_sign))
 {  
     $tmp_array=array(
-        'original'=>hexToStr($hex),
+        'original'=>\PPkPub\Util::hexToStr($hex),
         'sign'=>$owner_sign,
     );
-    $tmp_json_hex = strToHex(json_encode($tmp_array));
+    $tmp_json_hex = \PPkPub\Util::strToHex(json_encode($tmp_array));
     
     $tmp_array=json_decode($str_original,true);
-    $update_ppk_uri=$tmp_array['coin_uri'].'bindAddress('.$tmp_json_hex.')#';
+    $update_ppk_uri=$tmp_array['coin_uri'].'bindAddress('.$tmp_json_hex.')';
     //echo '$update_ppk_uri=',$update_ppk_uri,"<br>\n";
     
-    $tmp_data=getPPkResource($update_ppk_uri);
+    $tmp_data=\PPkPub\PTTP::getPPkResource($update_ppk_uri);
     //print_r($tmp_data);
     if($tmp_data['status_code']==200){
         if($response_type=='html'){
             echo '<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/></head>';
-            echo '扫码签名确认通过，请回到所登录设备上继续访问。<br>Verified ok as ',getSafeEchoTextToPage($owner_odin_uri);
+            echo '扫码签名确认通过，请回到所登录设备上继续访问。<br>Verified ok as ',\PPkPub\Util::getSafeEchoTextToPage($owner_odin_uri);
         }else{
             $arr = array('code' => 0, 'msg' => '扫码签名确认通过，请回到所登录设备上继续访问。owner_sign verified ok as '.$owner_odin_uri);
             echo json_encode($arr);
@@ -60,19 +60,19 @@ require_once "page_header.inc.php";
 <h3>扫码确认签名</h3>
 
 <form class="form-horizontal"  action="qr_sign.php" method="get" id="form_confirm">
-<input type="hidden" name="hex" id="auth_txt_hex" value="<?php safeEchoTextToPage($hex) ;?>">
+<input type="hidden" name="hex" id="auth_txt_hex" value="<?php \PPkPub\Util::safeEchoTextToPage($hex) ;?>">
 <input type="hidden" name="owner_sign" id="owner_sign" value="">
 <input type="hidden" name="response_type" value="html">
 
 <div class="form-group">
     <label for="exist_odin_uri" class="col-sm-2 control-label">签名者身份(Owner)</label>
     <div class="col-sm-10">
-      <input type="text" class="form-control"  id="exist_odin_uri" name="owner_odin_uri" value="<?php safeEchoTextToPage($owner_odin_uri) ;?>"  onchange="getUserOdinInfo();"  >
+      <input type="text" class="form-control"  id="exist_odin_uri" name="owner_odin_uri" value="<?php \PPkPub\Util::safeEchoTextToPage($owner_odin_uri) ;?>"  onchange="getUserOdinInfo();"  >
     </div>
     
     <label for="exist_odin_uri" class="col-sm-2 control-label">待签名内容(Original)</label>
     <div class="col-sm-10">
-      <textarea class="form-control" rows=3 ><?php safeEchoTextToPage($str_original) ;?></textarea>
+      <textarea class="form-control" rows=3 ><?php \PPkPub\Util::safeEchoTextToPage($str_original) ;?></textarea>
     </div>
 </div>
   

@@ -3,17 +3,17 @@
 require_once "ppk_swap.inc.php";
 
 //Get base bitcoin/usd price
-$base_btc_price_cny = getCoinValueOfCNY(1,COIN_TYPE_BITCOIN);
+$base_btc_price_cny = getCoinValueOfCNY(1,\PPkPub\PTAP02ASSET::COIN_TYPE_BITCOIN);
 
 //Get the supported coin prices
 $new_coin_price_cny_list=array(
-    COIN_TYPE_BITCOIN => $base_btc_price_cny
+    \PPkPub\PTAP02ASSET::COIN_TYPE_BITCOIN => $base_btc_price_cny
 );
 
 
 foreach($gArraySupportedCoinTypeList as $tmp_coin_type){
-    $query_ppk_uri=$tmp_coin_type.'marketPrice()#';
-    $tmp_data=getPPkResource($query_ppk_uri);
+    $query_ppk_uri=$tmp_coin_type.'marketPrice()';
+    $tmp_data=\PPkPub\PTTP::getPPkResource($query_ppk_uri);
     //print_r($tmp_data);
     if($tmp_data['status_code']==200){
         $tmp_array=json_decode($tmp_data['content'],true);

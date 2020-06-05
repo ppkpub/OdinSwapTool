@@ -9,25 +9,25 @@ if(strlen($g_currentUserODIN)==0){
   exit(-1);
 }
 
-$bid_rec_id=safeReqNumStr('bid_rec_id');
-$action_type=safeReqChrStr('action_type');
-$seller_address=safeReqChrStr('seller_address');
-$bidder_address=safeReqChrStr('bidder_address');
-$service_uri=PPK_ODINSWAP_SERVICE_URI_PREFIX.'bid/'.$bid_rec_id.'#';
+$bid_rec_id=\PPkPub\Util::safeReqNumStr('bid_rec_id');
+$action_type=\PPkPub\Util::safeReqChrStr('action_type');
+$seller_address=\PPkPub\Util::safeReqChrStr('seller_address');
+$bidder_address=\PPkPub\Util::safeReqChrStr('bidder_address');
+$service_uri=PPK_ODINSWAP_SERVICE_URI_PREFIX.'bid/'.$bid_rec_id;
 
 if(strlen($bid_rec_id)==0){
-  error_exit('./', 'Invalid record ID.');
+  \PPkPub\Util::error_exit('./', 'Invalid record ID.');
 }
 
 if(strlen($action_type)==0){
-  error_exit('./','Invalid action_type.');
+  \PPkPub\Util::error_exit('./','Invalid action_type.');
 }
 
 
 $sqlstr = "SELECT bids.*,sells.seller_uri FROM bids,sells where sells.sell_rec_id=bids.sell_rec_id and bid_rec_id='$bid_rec_id';";
 $rs = mysqli_query($g_dbLink,$sqlstr);
 if (!$rs) {
-  error_exit('./','Not existed record.');
+  \PPkPub\Util::error_exit('./','Not existed record.');
 }
 $tmp_bid_record = mysqli_fetch_assoc($rs);
 $asset_id=$tmp_bid_record['asset_id'] ;
@@ -40,7 +40,7 @@ $bCurrentUserIsBidder = ($g_currentUserODIN==$tmp_bid_record['bidder_uri']) ? tr
 
 if($action_type=='accept'){
     if( !$bCurrentUserIsSeller ){
-      error_exit('./', '只有拍卖方才能确认接受报价单. Only seller can accpet bid.');
+      \PPkPub\Util::error_exit('./', '只有拍卖方才能确认接受报价单. Only seller can accpet bid.');
     }
 
     //组织交易信息
@@ -48,33 +48,33 @@ if($action_type=='accept'){
     
 }else if($action_type=='pay'){
     if( !($bCurrentUserIsBidder && ($tmp_bid_record['status_code']==PPK_ODINSWAP_STATUS_ACCEPT||$tmp_bid_record['status_code']==PPK_ODINSWAP_STATUS_PAID) ) ) {
-      error_exit('./','只有已被接受的报价方才能确认付款. Only accepted bidder can pay for the bid.');
+      \PPkPub\Util::error_exit('./','只有已被接受的报价方才能确认付款. Only accepted bidder can pay for the bid.');
     }
     
     //组织交易信息
     $array_witness_tx_data=genPayBidArray($tmp_bid_record['bidder_uri'],$bidder_address, $tmp_bid_record['seller_uri'],$seller_address,  $asset_id,$full_odin_uri,$coin_type,$bid_amount,$service_uri);
 }else{
-    error_exit('./', '无效的操作类型. Invalid action_type.');
+    \PPkPub\Util::error_exit('./', '无效的操作类型. Invalid action_type.');
 }
 
 $array_witness_tx_data['amount_satoshi'] = $array_witness_tx_data['amount_satoshi'] + ($bid_rec_id %100) * 10 + 5  ; //将存证交易的交易金额的倒数第2和第3位设为交易记录号的最后两位，最后一位固定为5，作为特别标识来关联查询
 
-$tx_define_json_hex = strToHex(json_encode($array_witness_tx_data));
+$tx_define_json_hex = \PPkPub\Util::strToHex(json_encode($array_witness_tx_data));
 
 //兼容生成PPkAndroid APP需要的数据
-$array_witness_tx_data['source']=removeCoinPrefix($array_witness_tx_data['from_uri'],COIN_TYPE_BITCOINCASH);
-$array_witness_tx_data['destination']=removeCoinPrefix($array_witness_tx_data['to_uri'],COIN_TYPE_BITCOINCASH);
+$array_witness_tx_data['source']=\PPkPub\PTAP02ASSET::removeCoinPrefix($array_witness_tx_data['from_uri'],\PPkPub\PTAP02ASSET::COIN_TYPE_BITCOINCASH);
+$array_witness_tx_data['destination']=\PPkPub\PTAP02ASSET::removeCoinPrefix($array_witness_tx_data['to_uri'],\PPkPub\PTAP02ASSET::COIN_TYPE_BITCOINCASH);
 $array_witness_tx_data['coin_type']=$array_witness_tx_data['asset_uri'];
-$array_witness_tx_data['data_hex']=strToHex($array_witness_tx_data['data']);
+$array_witness_tx_data['data_hex']=\PPkPub\Util::strToHex($array_witness_tx_data['data']);
 
 //print_r($array_witness_tx_data);
-$ppkapp_tx_define_json_hex = strToHex(json_encode($array_witness_tx_data));
+$ppkapp_tx_define_json_hex = \PPkPub\Util::strToHex(json_encode($array_witness_tx_data));
 
 require_once "page_header.inc.php";
 ?>
 <div class="row section">
   <div class="form-group">
-    <label for="top_buttons" class="col-sm-5 control-label"><h3><?php echo getLang('处理拍卖交易');?>[<?php safeEchoTextToPage( $asset_id );?>]</h3></label>
+    <label for="top_buttons" class="col-sm-5 control-label"><h3><?php echo getLang('处理拍卖交易');?>[<?php \PPkPub\Util::safeEchoTextToPage( $asset_id );?>]</h3></label>
     <div class="col-sm-7" id="top_buttons" align="right">
     </div>
   </div>
@@ -82,29 +82,29 @@ require_once "page_header.inc.php";
 
 <form class="form-horizontal" >
 <div class="form-group">
-    <label for="bidder_address" class="col-sm-2 control-label"><?php echo getLang('报价方钱包地址');?></label>
+    <label for="bidder_address" class="col-sm-2 control-label"><?php echo $bCurrentUserIsBidder ? getLang('我的钱包地址'):getLang('报价方钱包地址');?></label>
     <div class="col-sm-10">
-      <input type="text" class="form-control" name="bidder_address"  id="bidder_address" value="<?php safeEchoTextToPage( removeCoinPrefix($bidder_address,$coin_type)  );?>">
+      <input type="text" class="form-control" name="bidder_address"  id="bidder_address" value="<?php \PPkPub\Util::safeEchoTextToPage( \PPkPub\PTAP02ASSET::removeCoinPrefix($bidder_address,$coin_type)  );?>">
     </div>
 </div>
 
 <div class="form-group">
-    <label for="bid_data_desc" class="col-sm-2 control-label"><?php echo getLang('待存证到链上的备注信息');?></label>
+    <label for="bid_data_desc" class="col-sm-2 control-label"><?php echo getLang('待存证到链上的信息');?></label>
     <div class="col-sm-10">
-      <textarea class="form-control" rows=3 cols=100 id="bid_data_desc"><?php safeEchoTextToPage( $array_witness_tx_data['data'] );?></textarea>
+      <textarea class="form-control" rows=3 cols=100 id="bid_data_desc"><?php \PPkPub\Util::safeEchoTextToPage( $array_witness_tx_data['data'] );?></textarea>
     </div>
 </div>
 
 <div class="form-group">
-    <label for="seller_address" class="col-sm-2 control-label"><?php echo getLang('拍卖方钱包地址');?></label>
+    <label for="seller_address" class="col-sm-2 control-label"><?php echo $bCurrentUserIsSeller ? getLang('我的钱包地址'):getLang('拍卖方钱包地址');?></label>
     <div class="col-sm-10">
-      <input type="text" class="form-control" name="seller_address"  id="seller_address" value="<?php safeEchoTextToPage( removeCoinPrefix($seller_address,$coin_type) );?>">
+      <input type="text" class="form-control" name="seller_address"  id="seller_address" value="<?php \PPkPub\Util::safeEchoTextToPage( \PPkPub\PTAP02ASSET::removeCoinPrefix($seller_address,$coin_type) );?>">
     </div>
 </div>
 
 <div class="form-group" align="center">
 <div class="col-sm-offset-2 col-sm-10">
-  <button id='send_trans_btn' class="btn btn-warning" type="button"  onclick="sendTX();return false;"  ><?php echo getLang('确认并发送到');?> <?php safeEchoTextToPage( getCoinName($coin_type));?>  <?php echo getLang('链上公开存证');?></button><br>
+  <button id='send_trans_btn' class="btn btn-warning" type="button"  onclick="sendTX();return false;"  ><?php echo getLang('确认并发送到');?> <?php \PPkPub\Util::safeEchoTextToPage( getCoinName($coin_type));?>  <?php echo getLang('链上公开存证');?></button><br>
   <div id="qrcode_img" ></div>
   <img id="qr_loading" value="image/white.png" ><span id="qr_prompt" ></span><br>
   <?php echo getLang('注：1.确认报价或支付并存证到链上会花费若干交易费用。');?><br>
@@ -163,19 +163,50 @@ function init(){
 
 function sendTX(){
     //检查是否支持PPk PeerWeb钱包插件进行本地签名交易
-    if(gCointType=="<?php echo COIN_TYPE_BITCOINCASH;?>"){
+    if(gCointType=="<?php echo \PPkPub\PTAP02ASSET::COIN_TYPE_BITCOINCASH;?>"){
         if(typeof(PeerWeb) !== 'undefined'){
             console.log("PeerWeb enabled");
             
-            document.getElementById("send_trans_btn").innerHTML='Waiting';
+            document.getElementById("send_trans_btn").innerHTML='<?php echo getLang('请稍候');?>...';
             document.getElementById("send_trans_btn").disabled=true;
             PeerWeb.getSignedTX(
-                '<?php echo COIN_TYPE_BITCOINCASH;?>',
+                '<?php echo \PPkPub\PTAP02ASSET::COIN_TYPE_BITCOINCASH;?>',
                 '<?php 
-                safeEchoTextToPage( $ppkapp_tx_define_json_hex );
+                \PPkPub\Util::safeEchoTextToPage( $ppkapp_tx_define_json_hex );
                 ?>', 
                 'callback_getSignedTX'
             );
+        }else{
+            //没有可用的钱包插件，提供扫码发送交易
+            console.log("PeerWeb not valid");
+            showQrCode();
+        }
+    }else if(gCointType.startsWith("<?php echo \PPkPub\PTAP02ASSET::COIN_TYPE_MOV;?>") ){
+        if(typeof(window.bytom) !== 'undefined'){
+            console.log("Bytom enabled");
+            
+            document.getElementById("send_trans_btn").innerHTML='<?php echo getLang('请稍候');?>...';
+            document.getElementById("send_trans_btn").disabled=true;
+            
+            var params = {
+              to: '<?php \PPkPub\Util::safeEchoTextToPage( \PPkPub\PTAP02ASSET::removeCoinPrefix($array_witness_tx_data['to_uri'],\PPkPub\PTAP02ASSET::COIN_TYPE_MOV)  );?>',
+              from: window.bytom.defaultAccount.accountId,
+              amount:<?php echo $array_witness_tx_data['amount_satoshi']; ?>,
+              asset: '<?php echo $gArrayCoinTypeSet[$coin_type]['native_id'];?>'
+            }
+            
+            //alert(JSON.stringify(params));
+
+            window.bytom.sendTransaction(params).then(function (resp) {
+                document.getElementById("signed_txid").value=resp.transactionHash;
+                alert("已发出链上存证交易!");
+                doActionOK();
+            }).catch(function (err){
+                document.getElementById("send_trans_btn").innerHTML='重试';
+                document.getElementById("send_trans_btn").disabled=false;
+                
+                alert("发送链上存证交易失败!\nerr:"+err);
+            })
         }else{
             //没有可用的钱包插件，提供扫码发送交易
             console.log("PeerWeb not valid");
@@ -251,7 +282,7 @@ function callback_getSignedTX(status,obj_data){
     if('OK'==status){
         document.getElementById("signed_tx_hex").value=obj_data.signed_tx_hex;
         
-        document.getElementById("send_trans_btn").innerHTML='Waiting...';
+        document.getElementById("send_trans_btn").innerHTML='<?php echo getLang('请稍候');?>...';
         document.getElementById("send_trans_btn").disabled=true;
         
         //调用PeerWeb接口发送已签名的比特现金交易

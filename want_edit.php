@@ -4,7 +4,7 @@
 /*    Released under the MIT License.     */
 require_once "ppk_swap.inc.php";
 
-$want_rec_id=safeReqNumStr('want_rec_id');
+$want_rec_id=\PPkPub\Util::safeReqNumStr('want_rec_id');
 
 if(strlen($want_rec_id)==0){
   echo 'Invalid record ID.';
@@ -46,14 +46,14 @@ require_once "page_header.inc.php";
   <div class="form-group">
     <label for="seller_odin" class="col-sm-2 control-label"><?php echo getLang('求购者身份标识');?></label>
     <div class="col-sm-10">
-      <span id="seller_odin"><?php safeEchoTextToPage( $g_currentUserODIN );?></span>
+      <span id="seller_odin"><?php echo getUserLabelHTML($g_currentUserODIN,false);?></span>
     </div>
   </div> 
   
   <div class="form-group">
     <label for="want_names" class="col-sm-2 control-label"><?php echo getLang('想买的奥丁号');?></label>
     <div class="col-sm-10">
-      <input type="text" class="form-control" placeholder="<?php echo getLang('列出想要的奥丁号数字或英文名称');?>" name="want_names" id="want_names" value="<?php safeEchoTextToPage( $tmp_want_record['want_names'] );?>">
+      <input type="text" class="form-control" placeholder="<?php echo getLang('列出想要的奥丁号数字或英文名称');?>" name="want_names" id="want_names" value="<?php \PPkPub\Util::safeEchoTextToPage( $tmp_want_record['want_names'] );?>">
     </div>
   </div>  
   
@@ -81,7 +81,7 @@ require_once "page_header.inc.php";
   <div class="form-group">
     <label for="remark" class="col-sm-2 control-label"><?php echo getLang('详细说明');?></label>
     <div class="col-sm-10">
-     <textarea class="form-control" name="remark" id="remark" rows=10 placeholder="<?php echo getLang('可以填写对所购奥丁号的描述说明、求购方的联系方式如Email/微信/Telegram等。');?>" ><?php safeEchoTextToPage( $tmp_want_record['remark'] );?>
+     <textarea class="form-control" name="remark" id="remark" rows=10 placeholder="<?php echo getLang('可以填写对所购奥丁号的描述说明、求购方的联系方式如Email/微信/Telegram等。');?>" ><?php \PPkPub\Util::safeEchoTextToPage( $tmp_want_record['remark'] );?>
      </textarea>
     </div>
   </div>

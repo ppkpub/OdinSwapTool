@@ -4,10 +4,10 @@
 /*    Released under the MIT License.     */
 require_once "ppk_swap.inc.php";
 
-$sell_rec_id=safeReqNumStr('sell_rec_id');
+$sell_rec_id=\PPkPub\Util::safeReqNumStr('sell_rec_id');
 
 if(strlen($sell_rec_id)==0){
-  error_exit('./', 'Invalid auction record ID.');
+  \PPkPub\Util::error_exit('./', 'Invalid auction record ID.');
 }
 
 if(strlen($g_currentUserODIN)==0){
@@ -20,7 +20,7 @@ $sqlstr = "SELECT sells.* FROM sells where sells.sell_rec_id='$sell_rec_id';";
 //echo $sqlstr ;
 $rs = mysqli_query($g_dbLink,$sqlstr);
 if (!$rs) {
-  error_exit('./', 'Not existed auction record.');
+  \PPkPub\Util::error_exit('./', 'Not existed auction record.');
 }
 $tmp_sell_record = mysqli_fetch_assoc($rs);
 $asset_id=$tmp_sell_record['asset_id'] ;
@@ -41,7 +41,7 @@ if($suggest_bid_amount<$tmp_sell_record['start_amount']){
     $suggest_bid_amount=$tmp_sell_record['start_amount'];
 }
         
-//$str_created_time = formatTimestampForView($tmp_user_info['block_time'],false);
+//$str_created_time = \PPkPub\Util::formatTimestampForView($tmp_user_info['block_time'],false);
 
 
 require_once "page_header.inc.php";
@@ -56,14 +56,14 @@ require_once "page_header.inc.php";
 
 <?php
 //检查有权参拍该标识
-//$tmp_user_info=getPubUserInfo($g_currentUserODIN);
+//$tmp_user_info=\PPkPub\PTAP01DID::getPubUserInfo($g_currentUserODIN);
 
-echo '<p><strong>',getLang('标的奥丁号'),': </strong> <a href="http://tool.ppkpub.org:9876/odin-detail?odin=',urlencode($asset_id),'" target="_blank">',getSafeEchoTextToPage($asset_id),'</a></p>';
+echo '<p><strong>',getLang('标的奥丁号'),': </strong> <a href="http://tool.ppkpub.org:9876/odin-detail?odin=',urlencode($asset_id),'" target="_blank">',\PPkPub\Util::getSafeEchoTextToPage($asset_id),'</a></p>';
 
-echo '<p><strong>',getLang('参拍用户身份'),': </strong> ',getSafeEchoTextToPage($g_currentUserODIN),'</p>';
+echo '<p><strong>',getLang('参拍用户身份'),': </strong> ',getUserLabelHTML($g_currentUserODIN,false),'</p>';
 
 if($g_currentUserODIN== $tmp_sell_record['seller_uri']  ){
-  error_exit('./', '不能参拍自己的数字资产. Unable to bid asset belong to yourself.');
+  \PPkPub\Util::error_exit('./', '不能参拍自己的数字资产. Unable to bid asset belong to yourself.');
 }
 
 $bidder_address=getCoinAddressURI($tmp_sell_record['coin_type'],$g_currentUserODIN);
@@ -79,7 +79,7 @@ $bidder_address=getCoinAddressURI($tmp_sell_record['coin_type'],$g_currentUserOD
     <label for="coin_type" class="col-sm-2 control-label"><?php echo getLang('出价币种');?></label>
     <div class="col-sm-10">
       <select class="form-control" name="coin_type" id="coin_type">
-          <option value="<?php echo getSafeEchoTextToPage($tmp_sell_record['coin_type']); ?>"><?php echo getSafeEchoTextToPage(getCoinSymbol($tmp_sell_record['coin_type'])); ?></option>
+          <option value="<?php echo \PPkPub\Util::getSafeEchoTextToPage($tmp_sell_record['coin_type']); ?>"><?php echo \PPkPub\Util::getSafeEchoTextToPage(getCoinSymbol($tmp_sell_record['coin_type'])); ?></option>
       </select>
     </div>
   </div>
@@ -93,7 +93,7 @@ $bidder_address=getCoinAddressURI($tmp_sell_record['coin_type'],$g_currentUserOD
           echo '<font color="#F00">',getLang('尚未关联设置对应的钱包地址'),' , <a href="'.$tmp_set_url.'">',getLang('请点击这里设置'),'...</a></font>';
           exit(-1);
       }else{
-          echo '<input type="text" class="form-control" name="bidder_address" id="bidder_address" value="',getSafeEchoTextToPage($bidder_address),'">';
+          echo '<input type="text" class="form-control" name="bidder_address" id="bidder_address" value="',\PPkPub\Util::getSafeEchoTextToPage($bidder_address),'">';
       }
       ?>
     </div>

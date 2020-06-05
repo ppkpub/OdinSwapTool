@@ -4,24 +4,26 @@
  */
 require_once "ppk_swap.inc.php";
 
-$qruuid=safeReqChrStr('qruuid');
-$user_odin_uri=safeReqChrStr('user_odin_uri');
-$auth_txt_hex=safeReqChrStr('auth_txt_hex');
-$user_sign = safeReqChrStr('user_sign');
-$response_type=safeReqChrStr('response_type');
+$qruuid=\PPkPub\Util::safeReqChrStr('qruuid');
+$user_odin_uri=\PPkPub\Util::safeReqChrStr('user_odin_uri');
+$auth_txt_hex=\PPkPub\Util::safeReqChrStr('auth_txt_hex');
+$user_sign = \PPkPub\Util::safeReqChrStr('user_sign');
+$response_type=\PPkPub\Util::safeReqChrStr('response_type');
 
 if(empty($qruuid) )
 {
     $qruuid=generateSessionSafeUUID(); 
 }
 
+$user_odin_uri = \PPkPub\ODIN::formatPPkURI($user_odin_uri,true);
+
 if( !empty($user_odin_uri) ){
     $user_loginlevel=0;
-    if(startsWith($user_odin_uri,COIN_TYPE_BYTOM)){
-        //测试允许直接输入BTM地址作为体验帐户登录
-        $user_loginlevel=1;
+    if(IS_DEMO && strcmp($user_odin_uri,DEMO_LOGIN_USER_ODIN_URI)==0){
+        //允许测试体验帐户登录
+        $user_loginlevel=DEMO_LOGIN_USER_LEVEL;
     }else if( !empty($auth_txt_hex)  && !empty($user_sign)){
-        $str_original= hexToStr($auth_txt_hex);
+        $str_original= \PPkPub\Util::hexToStr($auth_txt_hex);
         
         if(strpos($str_original,$qruuid)===false){
             $arr = array('code' => 500, 'msg' => '所签名的内容标识不一致. Invalid auth_txt without same qruuid!');
@@ -29,14 +31,14 @@ if( !empty($user_odin_uri) ){
             exit(-1);
         }
         
-        $current_page_path=getCurrentPagePath();
+        $current_page_path=\PPkPub\Util::getCurrentPagePath();
         if(strpos($str_original,$current_page_path)!==0){
             $arr = array('code' => 500, 'msg' => '所签名的登录网址路径不一致. Mismatched login URL!');
             responseResult($response_type,$arr);
             exit(-1);
         }
         
-        $arr=authSignatureOfODIN($user_odin_uri,$str_original,$user_sign);
+        $arr=\PPkPub\PTAP01DID::authSignatureOfODIN($user_odin_uri,$str_original,$user_sign);
         
         if($arr['code']==0){
             $user_loginlevel=2;
@@ -65,7 +67,7 @@ if( !empty($user_odin_uri) ){
 
     $arr = array(
         'code' => 0, 
-        'msg' => '<h3>扫码验证奥丁号通过<br>ODIN verified OK</h3><br><P><font color="#FF7026">'.getSafeEchoTextToPage($user_odin_uri).'</font><br><br>请回到所登录设备或网站上继续访问。<br>Please go back the device or page to continue. </p>'
+        'msg' => '<h3>扫码验证奥丁号通过<br>ODIN verified OK</h3><br><P><font color="#FF7026">'.\PPkPub\Util::getSafeEchoTextToPage($user_odin_uri).'</font><br><br>请回到所登录设备或网站上继续访问。<br>Please go back the device or page to continue. </p>'
     );
     responseResult($response_type,$arr);
     exit(0);
@@ -127,7 +129,7 @@ require_once "page_header.inc.php";
 <h3>确认扫码登录</h3>
 
 <form class="form-horizontal"  action="login_verify.php" method="post" id="form_confirm">
-<input type="hidden" name="qruuid"  id="qruuid" value="<?php safeEchoTextToPage($qruuid) ;?>">
+<input type="hidden" name="qruuid"  id="qruuid" value="<?php \PPkPub\Util::safeEchoTextToPage($qruuid) ;?>">
 <input type="hidden" name="auth_txt_hex" id="auth_txt_hex" value="">
 <input type="hidden" name="user_sign" id="user_sign" value="">
 <input type="hidden" name="response_type" value="html">
@@ -135,7 +137,7 @@ require_once "page_header.inc.php";
 <div class="form-group">
     <label for="exist_odin_uri" class="col-sm-2 control-label">用户奥丁号</label>
     <div class="col-sm-10">
-      <input type="text" class="form-control"  id="exist_odin_uri" name="user_odin_uri" value="<?php safeEchoTextToPage($user_odin_uri) ;?>"  onchange="getUserOdinInfo();"  >
+      <input type="text" class="form-control"  id="exist_odin_uri" name="user_odin_uri" value="<?php \PPkPub\Util::safeEchoTextToPage($user_odin_uri) ;?>"  onchange="getUserOdinInfo();"  >
     </div>
 </div>
   
@@ -167,12 +169,46 @@ require_once "page_header.inc.php";
 </div>
 </form>
 -->
-<p align="center">QRUUID: <?php safeEchoTextToPage($qruuid) ;?></p>
+<p align="center">QRUUID: <?php \PPkPub\Util::safeEchoTextToPage($qruuid) ;?></p>
 
 <script src="js/common_func.js"></script>
 <script type="text/javascript">
 var mObjUserInfo;
 var mTempDataHex;
+
+var mBoolBytomLoaded=false;
+
+document.addEventListener('chromeBytomLoaded', bytomExtension => {
+    mBoolBytomLoaded=true;
+    window.bytom.enable().then(accounts => {
+        //init();
+        alert("Bytom enabled");
+    });
+
+    initBytom();
+});
+
+function initBytom(){
+    window.bytom.setChain('vapor').then(function (resp) {
+        if(resp.status=="success"){
+            console.log("Bytom enabled");
+            
+            currentAddress = window.bytom.defaultAccount.address;
+            
+            if(currentAddress.length>0){
+                //document.getElementById("exist_odin_uri").value='<?php echo \PPkPub\PTAP02ASSET::COIN_TYPE_MOV ;?>'+currentAddress;
+                document.getElementById("exist_odin_uri").value=currentAddress;
+                
+                document.getElementById("btn_use_exist_odin").value=" 使用比原MOV侧链地址登录 ";
+                document.getElementById("btn_use_exist_odin").disabled=false;
+            }
+        }else{
+            myalert(resp.status);
+        }
+    }).catch(function (err){
+        myalert(err)
+    })
+}
 
 window.onload=function(){
     init();
@@ -211,7 +247,10 @@ function init(){
                 //在QQ空间打开
         }
         */
-        window.location.href = "<?php echo WEIXIN_QR_SERVICE_URL;?>?login_confirm_url=<?php echo urlencode(getCurrentUrl());?>";
+        var int=self.setInterval(function(){
+                 if(!mBoolBytomLoaded)
+                    window.location.href = "<?php echo WEIXIN_QR_SERVICE_URL;?>?login_confirm_url=<?php echo urlencode(\PPkPub\Util::getCurrentUrl());?>";
+              },1000) //等待1秒后，如果发现没有比原插件，则调用PPk网页版小工具
     }
 }
 
@@ -292,13 +331,25 @@ function authAsOdinOwner(){
     mTempDataHex = stringToHex(auth_txt);
     document.getElementById("auth_txt_hex").value=mTempDataHex;
     
-    //请求用指定资源密钥来生成签名
-    PeerWeb.signWithPPkResourcePrvKey(
-        exist_odin_uri,
-        requester_uri ,
-        mTempDataHex,
-        'callback_signWithPPkResourcePrvKey'  //回调方法名称
-    );
+    if(typeof(PeerWeb) !== 'undefined'){
+        //请求PeerWeb插件用指定资源密钥来生成签名
+        PeerWeb.signWithPPkResourcePrvKey(
+            exist_odin_uri,
+            requester_uri ,
+            mTempDataHex,
+            'callback_signWithPPkResourcePrvKey'  //回调方法名称
+        );
+    }else if(typeof(window.bytom) !== 'undefined'){
+        //请求Bytom插件
+        if(exist_odin_uri.length == 0 ){
+            alert("没有可用的钱包地址！\n请使用Bycoin钱包应用并授权访问账户信息再试下。");       
+            return;
+        }
+        
+        window.location.href= "bapp.php?address="+exist_odin_uri+"&qruuid=<?php \PPkPub\Util::safeEchoTextToPage($qruuid) ;?>";
+    }else{
+        alert("不支持的浏览器！");
+    }
 }
 
 function callback_signWithPPkResourcePrvKey(status,obj_data){

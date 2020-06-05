@@ -1,9 +1,8 @@
 <?php
 /*      PPK JoyAsset SwapService          */
-/*         PPkPub.org  20200221           */  
+/*         PPkPub.org  20200313           */  
 /*    Released under the MIT License.     */
-require_once('ppk_common_define.php');
-require_once('ppk_common_function.php');
+
 
 //获取用户指定币种的钱包地址URI
 function getCoinAddressURI($coin_type,$owner_uri){
@@ -20,15 +19,15 @@ function getCoinAddressURI($coin_type,$owner_uri){
     }
     
     //如果未登记附加地址，则尝试使用该ODIN标识注册者的默认钱包地址
-    $tmp_owner_info=getPubUserInfo($owner_uri);
-    if(startsWith($tmp_owner_info['register'],$coin_type)){
+    $tmp_owner_info=\PPkPub\PTAP01DID::getPubUserInfo($owner_uri);
+    if(\PPkPub\Util::startsWith(@$tmp_owner_info['register'],$coin_type)){
         return $tmp_owner_info['register'];
-    }else if($coin_type==COIN_TYPE_BITCOINCASH){
-        if(startsWith($tmp_owner_info['register'],COIN_TYPE_BITCOIN)){
-            return COIN_TYPE_BITCOINCASH.removeCoinPrefix($tmp_owner_info['register'],COIN_TYPE_BITCOIN);
+    }else if($coin_type==\PPkPub\PTAP02ASSET::COIN_TYPE_BITCOINCASH){
+        if(\PPkPub\Util::startsWith(@$tmp_owner_info['register'],\PPkPub\PTAP02ASSET::COIN_TYPE_BITCOIN)){
+            return \PPkPub\PTAP02ASSET::COIN_TYPE_BITCOINCASH.\PPkPub\PTAP02ASSET::removeCoinPrefix($tmp_owner_info['register'],\PPkPub\PTAP02ASSET::COIN_TYPE_BITCOIN);
         }
-    }else if($coin_type==COIN_TYPE_BITCOIN){
-        if(startsWith($tmp_owner_info['register'],COIN_TYPE_BITCOIN)){
+    }else if($coin_type==\PPkPub\PTAP02ASSET::COIN_TYPE_BITCOIN){
+        if(\PPkPub\Util::startsWith($tmp_owner_info['register'],\PPkPub\PTAP02ASSET::COIN_TYPE_BITCOIN)){
             return $tmp_owner_info['register'];
         }
     }
@@ -40,7 +39,7 @@ function getCoinAddressURI($coin_type,$owner_uri){
 function  getUserOwnedRootODINs($user_btc_address,$start=0,$limit=100){
     $odin_list=array();
     
-    if( startsWith($user_btc_address,'bitcoin:')){
+    if( \PPkPub\Util::startsWith($user_btc_address,'bitcoin:')){
         $user_btc_address=substr($user_btc_address,8);
     }
 
@@ -106,16 +105,73 @@ function getStatusLabel($status_code){
         return getLang('未知').'['.$status_code.']';
 } 
 
+//获取拍卖交易状态码对应文字样式
+function getStatusStyle($status_code){
+    $tmp_status_str='label-default';
+    switch($status_code){
+        case PPK_ODINSWAP_STATUS_BID:
+            $tmp_status_str = 'label-primary';
+            break;
+        case PPK_ODINSWAP_STATUS_ACCEPT:
+            $tmp_status_str = 'label-warning';
+            break;
+        case PPK_ODINSWAP_STATUS_PAID:
+            $tmp_status_str = 'label-warning';
+            break;
+        case PPK_ODINSWAP_STATUS_TRANSFER:
+            $tmp_status_str = 'label-warning';
+            break;
+        case PPK_ODINSWAP_STATUS_CANCEL:
+            $tmp_status_str = 'label-danger';
+            break;
+        case PPK_ODINSWAP_STATUS_EXPIRED:
+            $tmp_status_str = 'label-warning';
+            break;
+        case PPK_ODINSWAP_STATUS_NONE:
+            $tmp_status_str = 'label-default';
+            break;
+        case PPK_ODINSWAP_STATUS_UNCONFIRM:
+            $tmp_status_str = 'label-default';
+            break;
+        case PPK_ODINSWAP_STATUS_UNPAID:
+            $tmp_status_str = 'label-default';
+            break;
+        case PPK_ODINSWAP_STATUS_FINISH:
+            $tmp_status_str = 'label-default';
+            break;
+        case PPK_ODINSWAP_STATUS_LOSE:
+            $tmp_status_str = 'label-default';
+            break;
+        case PPK_ODINSWAP_STATUS_WANT:
+            $tmp_status_str = 'label-info';
+            break;
+        case PPK_ODINSWAP_STATUS_CLOSED:
+            $tmp_status_str = 'label-default';
+            break;
+           
+    }
+    
+    return $tmp_status_str;
+} 
 
-//自动更新已到期的拍卖纪录状态
-function autoUpdateExpiredSells(){ 
+//自动更新已到期的纪录状态
+function autoUpdateExpiredRecords(){ 
     Global $g_dbLink;
     $nowtime=time();
     
     //更新到期但有效参拍的状态
-    $sql_str="update sells,bids set sells.status_code='".PPK_ODINSWAP_STATUS_EXPIRED."',update_utc='".time()."' where sells.end_utc<=".$nowtime." and sells.status_code=".PPK_ODINSWAP_STATUS_BID." and sells.sell_rec_id=bids.sell_rec_id and bids.status_code=".PPK_ODINSWAP_STATUS_BID." ;";
+    /*$sql_str="UPDATE sells,bids SET sells.status_code='".PPK_ODINSWAP_STATUS_EXPIRED."',update_utc='".time()."' where sells.end_utc<=".$nowtime." and sells.status_code=".PPK_ODINSWAP_STATUS_BID." and sells.sell_rec_id=bids.sell_rec_id and bids.status_code=".PPK_ODINSWAP_STATUS_BID." ;";
     //echo $sql_str;
     $result=@mysqli_query($g_dbLink,$sql_str);
+    */
+    updateSpecRecords(
+        "SELECT sell_rec_id,seller_uri,asset_id FROM sells  WHERE end_utc<=".$nowtime." and status_code=".PPK_ODINSWAP_STATUS_BID." AND sell_rec_id IN (SELECT sell_rec_id FROM bids where bids.status_code=".PPK_ODINSWAP_STATUS_BID." GROUP BY sell_rec_id) ;",
+        "UPDATE sells SET status_code='".PPK_ODINSWAP_STATUS_EXPIRED."',update_utc='".time()."' ",
+        'sell_rec_id',
+        'seller_uri',
+        'asset_id',
+        '你有一条拍卖记录已结束报价，请及时确拍，超过'.ceil(PPK_ODINSWAP_OVEETIME_SECONDS/(24*60*60)).'天不处理将被自动关闭！'
+      );
     
     //更新剩下的到期但无有效参拍的记录状态
     $sql_str="update sells set status_code='".PPK_ODINSWAP_STATUS_NONE."' where end_utc<=".$nowtime." and status_code=".PPK_ODINSWAP_STATUS_BID.";";
@@ -130,11 +186,20 @@ function autoUpdateExpiredSells(){
     $sql_str="update sells set sells.status_code='".PPK_ODINSWAP_STATUS_UNCONFIRM."' where sells.end_utc<=".($nowtime-PPK_ODINSWAP_OVEETIME_SECONDS)." and sells.status_code=".PPK_ODINSWAP_STATUS_EXPIRED."  ;";
     //echo $sql_str;
     $result=@mysqli_query($g_dbLink,$sql_str);
+  
     
     //更新未及时付款的报价状态
-    $sql_str="update sells set sells.status_code='".PPK_ODINSWAP_STATUS_UNPAID."' where sells.accepted_utc<=".($nowtime-PPK_ODINSWAP_OVEETIME_SECONDS)." and sells.status_code=".PPK_ODINSWAP_STATUS_ACCEPT."  ;";
+    /*$sql_str="update sells set sells.status_code='".PPK_ODINSWAP_STATUS_UNPAID."' where sells.accepted_utc<=".($nowtime-PPK_ODINSWAP_OVEETIME_SECONDS)." and sells.status_code=".PPK_ODINSWAP_STATUS_ACCEPT."  ;";
     //echo $sql_str;
-    $result=@mysqli_query($g_dbLink,$sql_str);
+    $result=@mysqli_query($g_dbLink,$sql_str);*/
+    updateSpecRecords(
+        "SELECT sell_rec_id,seller_uri,asset_id FROM sells  WHERE accepted_utc<=".($nowtime-PPK_ODINSWAP_OVEETIME_SECONDS)." and status_code=".PPK_ODINSWAP_STATUS_ACCEPT." ;",
+        "UPDATE sells SET status_code='".PPK_ODINSWAP_STATUS_UNPAID."' ",
+        'sell_rec_id',
+        'seller_uri',
+        'asset_id',
+        '你有一条拍卖记录等待买家付款超过'.ceil(PPK_ODINSWAP_OVEETIME_SECONDS/(24*60*60)).'天，已被自动关闭！'
+      );
     
     //删除到期流拍的已过期7天以上记录
     $sql_str="delete from sells where status_code='".PPK_ODINSWAP_STATUS_NONE."' and end_utc<=".($nowtime-60*60*24*7).";";
@@ -145,9 +210,58 @@ function autoUpdateExpiredSells(){
     $result=@mysqli_query($g_dbLink,$sql_str);
     
     //更新到期的求购状态
+    updateSpecRecords(
+        "SELECT want_rec_id,wanter_uri FROM wants WHERE end_utc<=".$nowtime." and status_code=".PPK_ODINSWAP_STATUS_WANT." ;",
+        "UPDATE wants SET status_code='".PPK_ODINSWAP_STATUS_CLOSED."',update_utc='".time()."' ",
+        'want_rec_id',
+        'wanter_uri',
+        null,
+        '你的一条求购记录已到期关闭。'
+      );
+    /*
     $sql_str="update wants set wants.status_code='".PPK_ODINSWAP_STATUS_CLOSED."',update_utc='".time()."' where wants.end_utc<=".$nowtime." and wants.status_code=".PPK_ODINSWAP_STATUS_WANT." ;";
     //echo $sql_str;
     $result=@mysqli_query($g_dbLink,$sql_str);
+    */
+}
+
+function updateSpecRecords($spec_sql_str,$update_sql_prefix,$key_col_name,$user_col_name,$asset_col_name,$send_msg_prefix){ 
+    global  $g_dbLink;
+    //echo '<br>spec_sql_str=',$spec_sql_str;
+    
+    $str_matched_record_ids='';
+    $rs=@mysqli_query($g_dbLink,$spec_sql_str);
+    if ($rs) {
+      while ($row = mysqli_fetch_assoc($rs)) {
+          $tmp_rec_id = $row[$key_col_name];
+          //echo 'tmp_rec_id=',$tmp_rec_id;
+          if(strlen($str_matched_record_ids)>0)
+              $str_matched_record_ids .=',';
+          $str_matched_record_ids .= "'".$tmp_rec_id."'";
+          
+          $tmp_asset_info = (strlen($asset_col_name)>0) ? ' 相关奥丁号为['.\PPkPub\ODIN::PPK_URI_PREFIX.$row[$asset_col_name].']' : "";
+          
+          if( strlen($send_msg_prefix)>0 ){
+              if($key_col_name=='want_rec_id'){
+                  $str_msg =$send_msg_prefix.$tmp_asset_info.' <a href="want.php?want_rec_id='.$tmp_rec_id.'">查看&gt;&gt;</a>';
+              }else if($key_col_name=='sell_rec_id'){
+                  $str_msg =$send_msg_prefix.$tmp_asset_info.' <a href="sell.php?sell_rec_id='.$tmp_rec_id.'">查看&gt;&gt;</a>';
+              }
+              sendMsg(
+                PPK_ODINSWAP_MSG_USER_SYSTEM,
+                $row[$user_col_name],
+                PPK_ODINSWAP_MSG_TYPE_SYSTEM,
+                $str_msg
+             );
+         }
+      }
+    }
+    if(strlen($str_matched_record_ids)>0){
+        $sql_str = $update_sql_prefix." WHERE $key_col_name in ($str_matched_record_ids)";
+        //echo "<br>$sql_str=",$sql_str;
+        $result=@mysqli_query($g_dbLink,$sql_str);
+    }
+    return true;
 }
 
 //获取奥丁号配置管理权限对应文字名称
@@ -176,7 +290,7 @@ function genAcceptBidArray( $source_owner_odin,$source_address_uri, $dest_owner_
   $str_data = PPK_ODINSWAP_FLAG  
       .":accepted to sell ODIN[" .$asset_id
       ."] to (".$dest_owner_odin
-      .") for ". trimz($bid_amount) 
+      .") for ". \PPkPub\Util::trimz($bid_amount) 
       ." " . $str_coin_symbol;    
 
   $tmp_array=array(
@@ -184,7 +298,7 @@ function genAcceptBidArray( $source_owner_odin,$source_address_uri, $dest_owner_
     'to_uri' => $dest_address_uri,
     'asset_uri' => $coin_type,
     'amount_satoshi' => $gArrayCoinTypeSet[$coin_type]['min_transfer_amount'],
-    'fee_satoshi' => $gArrayCoinTypeSet[$coin_type]['base_miner_fee'],
+    'fee_satoshi' => @$gArrayCoinTypeSet[$coin_type]['base_miner_fee'],
     'data' => $str_data,
     'data_size' => strlen($str_data), //for test
   );
@@ -200,7 +314,7 @@ function genPayBidArray( $source_owner_odin,$source_address_uri, $dest_owner_odi
   $str_coin_symbol=getCoinSymbol($coin_type);
   
   $str_data = PPK_ODINSWAP_FLAG  
-      .": paid " . trimz($bid_amount) 
+      .": paid " . \PPkPub\Util::trimz($bid_amount) 
       ." ". $str_coin_symbol
       ." to (".$dest_owner_odin
       .") for ODIN[". $asset_id 
@@ -213,7 +327,7 @@ function genPayBidArray( $source_owner_odin,$source_address_uri, $dest_owner_odi
     'to_uri' => $dest_address_uri,
     'asset_uri' => $coin_type,
     'amount_satoshi' => $amount_satoshi,
-    'fee_satoshi' => $gArrayCoinTypeSet[$coin_type]['base_miner_fee'],
+    'fee_satoshi' => @$gArrayCoinTypeSet[$coin_type]['base_miner_fee'],
     'data' => $str_data, 
     'data_size' => strlen($str_data), //for test
   );
@@ -221,3 +335,87 @@ function genPayBidArray( $source_owner_odin,$source_address_uri, $dest_owner_odi
   return $tmp_array;
 }
 
+//发送消息
+function sendMsg($sender_uri,$receiver_uri,$message_type,$message_content)
+{
+    Global $g_dbLink;
+    $nowtime=time();
+    
+    if( $message_type == PPK_ODINSWAP_MSG_TYPE_MORMAL ){ //发送普通消息给自己也存一份
+        $sql_str="INSERT INTO private_message (user_uri,friend_uri,sender_uri,receiver_uri,message_type,message_content,send_utc,status_code) VALUES ('$sender_uri','$receiver_uri','$sender_uri','$receiver_uri','$message_type','$message_content',$nowtime,".PPK_ODINSWAP_MSG_STATUS_SENT.");";
+        $result=@mysqli_query($g_dbLink,$sql_str);
+    }
+    
+    $sql_str="INSERT INTO private_message (user_uri,friend_uri,sender_uri,receiver_uri,message_type,message_content,send_utc,status_code) VALUES ('$receiver_uri','$sender_uri','$sender_uri','$receiver_uri','$message_type','$message_content',$nowtime,".PPK_ODINSWAP_MSG_STATUS_NEW.");";
+    $result=@mysqli_query($g_dbLink,$sql_str);
+    //$new_msg_rec_id=mysqli_insert_id($g_dbLink);
+    
+    return $result;
+}
+
+function getMsgCounter($user_uri,$status_code = null)
+{
+    global $g_dbLink;
+    
+    $sqlstr = "SELECT count(*) as counter FROM private_message where user_uri='".addslashes($user_uri)."' and receiver_uri='".addslashes($user_uri)."' ";
+    
+    
+    if($status_code!=null)
+        $sqlstr .= " AND status_code = $status_code";
+    
+    $rs = mysqli_query($g_dbLink,$sqlstr);
+    if (!$rs) {
+      return 0;  
+    }
+    $tmp_msg_record = mysqli_fetch_assoc($rs); 
+    return $tmp_msg_record['counter'];
+}
+
+//获取消息状态码对应文字名称
+function getMsgStatusLabel($status_code){
+    $tmp_status_str=null;
+    switch($status_code){
+        case PPK_ODINSWAP_MSG_STATUS_NEW:
+            $tmp_status_str = '未读';
+            break;
+        case PPK_ODINSWAP_MSG_STATUS_READ:
+            $tmp_status_str = '已读';
+            break;
+        case PPK_ODINSWAP_MSG_STATUS_DELED:
+            $tmp_status_str = '已删除';
+            break;
+        case PPK_ODINSWAP_MSG_STATUS_SENT:
+            $tmp_status_str = '已发送';
+            break;
+    }
+    
+    if($tmp_status_str!=null)
+        return getLang($tmp_status_str);
+    else
+        return getLang('未知').'['.$status_code.']';
+} 
+
+function getUserLabelHTML($user_uri,$need_send_message=true,$spec_link=null){
+    global $g_currentUserODIN;
+    
+    if($spec_link==null)
+        $spec_link = 'user.php?user_odin='.urlencode($user_uri);
+    
+    if( $g_currentUserODIN == $user_uri ) {
+        return '<a href="'.$spec_link.'">'.getLang( '我' ).'('.\PPkPub\Util::getSafeEchoTextToPage( \PPkPub\Util::friendlyLongID($user_uri) ).')</a>';
+    }else{
+        return '<a href="'.$spec_link.'">'.\PPkPub\Util::getSafeEchoTextToPage( \PPkPub\Util::friendlyLongID($user_uri) ).'</a>'.( $need_send_message ? ' [<a href="new_msg.php?receiver_odin_uri='.urlencode($user_uri).'">'.getLang('给他发私信').'</a>]':'');
+    }
+
+}
+
+function updateMsgStatus($msg_id,$status_code)
+{
+    global $g_dbLink;
+    
+    $sqlstr = "UPDATE private_message set status_code='$status_code' WHERE msg_id=".$msg_id;
+    
+    mysqli_query($g_dbLink,$sqlstr);
+    
+    return true;
+}

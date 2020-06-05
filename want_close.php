@@ -4,7 +4,7 @@
 /*    Released under the MIT License.     */
 require_once "ppk_swap.inc.php";
 
-$want_rec_id=safeReqNumStr('want_rec_id');
+$want_rec_id=\PPkPub\Util::safeReqNumStr('want_rec_id');
 
 if(strlen($want_rec_id)==0){
   echo 'Invalid record ID.';
@@ -30,7 +30,12 @@ mysqli_query($g_dbLink,$sqlstr);
 
 require_once "page_header.inc.php";
 ?>
-<p><?php echo getLang('指定求购已结束。');?><br><a href="want.php?want_rec_id=<?php echo $want_rec_id;?>"><?php echo getLang('点击这里查看');?></a></p> 
+
+<center>
+<p><?php echo getLang('指定求购已结束。') ;?></p> 
+<p><a class="btn btn-success" role="button" href="want.php?want_rec_id=<?php echo $want_rec_id;?>"><?php echo getLang('点击这里查看');?></a></p> 
+</center>
+
 <?php 
 require_once "page_footer.inc.php";
 ?>

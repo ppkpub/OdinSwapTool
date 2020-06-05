@@ -9,11 +9,11 @@ if(strlen($g_currentUserODIN)==0){
   exit(-1);
 }
 
-$original_user_odin=originalReqChrStr('user_odin');
-$owner_address=safeReqChrStr('address');
-$from_want_rec_id=safeReqNumStr('from_want_rec_id');
+$original_user_odin=\PPkPub\Util::originalReqChrStr('user_odin');
+$owner_address=\PPkPub\Util::safeReqChrStr('address');
+$from_want_rec_id=\PPkPub\Util::safeReqNumStr('from_want_rec_id');
 
-if(stripos($original_user_odin,PPK_URI_PREFIX)!==0 && stripos($original_user_odin,DID_URI_PREFIX)!==0){
+if(stripos($original_user_odin,\PPkPub\ODIN::PPK_URI_PREFIX)!==0 && stripos($original_user_odin,DID_URI_PREFIX)!==0){
   echo 'Invalid user ODIN.';
   exit(-1);
 }
@@ -25,24 +25,24 @@ if(strlen($owner_address)==0 ){
 
 $is_owner=false;
 if($original_user_odin==$g_currentUserODIN 
-  || $original_user_odin.'#'==$g_currentUserODIN 
-  || $original_user_odin==$g_currentUserODIN.'#' ){ 
+  || $original_user_odin.'*'==$g_currentUserODIN 
+  || $original_user_odin==$g_currentUserODIN.'*' ){ 
     $is_owner=true;
   }
   
-$pagenum=0+safeReqNumStr('pagenum');
+$pagenum=@(0+\PPkPub\Util::safeReqNumStr('pagenum'));
 if($pagenum<=0)
-    $pagenum=100;
+    $pagenum=50;
 
-$start=0+safeReqNumStr('start');
+$start=@(0+\PPkPub\Util::safeReqNumStr('start'));
   
 require_once "page_header.inc.php";
 ?>
 
 <div id='user_info'>
     <hr>
-    <P><?php echo getLang('身份标识');?>: <?php safeEchoTextToPage( $original_user_odin); ?></p>
-    <P><?php echo getLang('拥有者主钱包地址');?>: <?php safeEchoTextToPage( $owner_address); ?></p>
+    <P><?php echo getLang('身份标识');?>: <?php \PPkPub\Util::safeEchoTextToPage( $original_user_odin); ?></p>
+    <P><?php echo getLang('拥有者主钱包地址');?>: <?php \PPkPub\Util::safeEchoTextToPage( $owner_address); ?></p>
 </div>
 
 <?php
@@ -79,12 +79,12 @@ for($ss=0;$ss<count($tmp_odin_list) ;$ss++){
     $tmp_odin_info=$tmp_odin_list[$ss];
     
     $tmp_asset_id=$tmp_odin_info['short'];
-    $full_odin_uri=PPK_URI_PREFIX.$tmp_odin_info['full'].PPK_URI_RES_FLAG;
+    $full_odin_uri=\PPkPub\ODIN::PPK_URI_PREFIX.$tmp_odin_info['full'].\PPkPub\ODIN::PPK_URI_RESOURCE_MARK;
     
     echo '<tr>';
-    echo '<td>',getSafeEchoTextToPage($tmp_asset_id),'</td>';
-    //echo '<td><a target="_blank" href="user.php?user_odin=', urlencode($full_odin_uri),'">',getSafeEchoTextToPage($full_odin_uri),'</a></td>';
-    echo '<td>',getSafeEchoTextToPage($full_odin_uri),'</td>';
+    echo '<td>',\PPkPub\Util::getSafeEchoTextToPage($tmp_asset_id),'</td>';
+    //echo '<td><a target="_blank" href="user.php?user_odin=', urlencode($full_odin_uri),'">',\PPkPub\Util::getSafeEchoTextToPage($full_odin_uri),'</a></td>';
+    echo '<td>',\PPkPub\Util::getSafeEchoTextToPage($full_odin_uri),'</td>';
     
     if(isset($array_user_sells[$tmp_asset_id])){
         $row=$array_user_sells[$tmp_asset_id];
@@ -97,9 +97,9 @@ for($ss=0;$ss<count($tmp_odin_list) ;$ss++){
             echo '<br><a href="new_sell.php?asset_id=',urlencode($tmp_asset_id),'">',getLang('重新发起拍卖'),'</a>';
         }else{
             echo '<a class="btn btn-success" role="button" href="sell.php?sell_rec_id=',$row['sell_rec_id'],'">',getStatusLabel($row['status_code']),'</a><br>';
-            echo '<font size="-1">',getLang('起始报价'),': ',trimz($row['start_amount']),' ',getSafeEchoTextToPage(getCoinSymbol($row['coin_type'])),'<br>';
+            echo '<font size="-1">',getLang('起始报价'),': ',\PPkPub\Util::trimz($row['start_amount']),' ',\PPkPub\Util::getSafeEchoTextToPage(getCoinSymbol($row['coin_type'])),'<br>';
             if(isset($row['max_bid_amount']))
-                echo getLang('最新报价'),': ',trimz($row['max_bid_amount']),' ',getSafeEchoTextToPage(getCoinSymbol($row['coin_type']));//,' 来自 <a href="user.php?user_odin=',urlencode($row['bidder_uri']),'">',$row['bidder_uri'],'</a><br>';
+                echo getLang('最新报价'),': ',\PPkPub\Util::trimz($row['max_bid_amount']),' ',\PPkPub\Util::getSafeEchoTextToPage(getCoinSymbol($row['coin_type']));//,' 来自 <a href="user.php?user_odin=',urlencode($row['bidder_uri']),'">',$row['bidder_uri'],'</a><br>';
             echo '</font>';
         }
         echo '</td>';
@@ -121,7 +121,7 @@ for($ss=0;$ss<count($tmp_odin_list) ;$ss++){
     $page_base_url='user_asset_list.php?user_odin='.urlencode($original_user_odin).'&address='.urlencode($owner_address).'&from_want_rec_id='.urlencode($from_want_rec_id).'&start=';
 
     if($start>=$pagenum) {//说明有上一页
-        echo '<a href="',$page_base_url.($start-$pagenum),'">《',getLang('上一页'),'</a> ';
+        echo '<a class="btn btn-success" role="button"  href="',$page_base_url.($start-$pagenum),'">《',getLang('上一页'),'</a> ';
     }
 
     echo " ",getLang('当前为第'),($start/$pagenum)+1,getLang('页')," ";
@@ -130,7 +130,7 @@ for($ss=0;$ss<count($tmp_odin_list) ;$ss++){
         echo ' <a href="'.$page_base_url.($start+$pagenum).'">',getLang('下一页'),'》</a>';
     }
     
-    echo ' <a href="'.$page_base_url.'0&pagenum=10000">',getLang('全部显示'),'</a>';
+    echo ' <a class="btn btn-success" role="button"  href="'.$page_base_url.'0&pagenum=10000">',getLang('全部显示'),'</a>';
     
     echo '</center>';
 }

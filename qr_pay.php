@@ -4,7 +4,7 @@
  */
 require_once "ppk_swap.inc.php";
 
-$hex=safeReqChrStr('hex');
+$hex=\PPkPub\Util::safeReqChrStr('hex');
 
 if(strlen($hex)==0){
     $arr = array('code'=> 1,  'msg' => 'invalid TX hex' );
@@ -13,7 +13,7 @@ if(strlen($hex)==0){
     exit(-1);   
 }
 
-$array_tx_define=@json_decode(@hexToStr($hex),true);
+$array_tx_define=@json_decode(@\PPkPub\Util::hexToStr($hex),true);
 //print_r($array_tx_define);
 $asset_uri=$array_tx_define['asset_uri'];
 
@@ -21,8 +21,8 @@ $arr = array('code' => 1, 'msg' => 'Not supported asset_uri: '.$asset_uri);
 
 foreach($gArraySupportedCoinTypeList as $tmp_coin_type){
   if( $asset_uri == $tmp_coin_type ){
-      $tmp_ppk_uri = $tmp_coin_type.'qrCodeOfPay('.$hex.')#1.0';
-      $tmp_data=getPPkResource($tmp_ppk_uri);
+      $tmp_ppk_uri = $tmp_coin_type.'qrCodeOfPay('.$hex.')';
+      $tmp_data=\PPkPub\PTTP::getPPkResource($tmp_ppk_uri);
       
       if($tmp_data['status_code']==200){
         $tmp_qr_info=@json_decode($tmp_data['content'],true);
